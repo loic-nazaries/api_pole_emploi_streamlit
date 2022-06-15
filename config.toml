@@ -1,0 +1,13 @@
+[theme]
+base = "dark"
+primaryColor = "#a44bff"
+backgroundColor = #A4FF4A
+# secondaryBackgroundColor =
+# textColor =
+font = "serif"
+
+[server]
+runOnSave = true
+
+[runner]
+fastReruns = true
