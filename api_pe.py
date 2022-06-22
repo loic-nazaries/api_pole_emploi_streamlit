@@ -1,7 +1,6 @@
 """API of Pole Emploi
     Specifically, an API to consult available job offers.
 
-    TODO create a GitHub repo
     TODO better describe the sections and results
     TODO build functions
                 TODO then, add cache function decorators, i.e.:
@@ -22,12 +21,14 @@
                 'List of Categories' containing a definition of the categories;
                 e.g. scroll down list
     TODO fix missing values table and data plot
+    TODO eventually, keep top 5 competences and qualitesProfessionnelles
     TODO the default minimum date cannot be set
     TODO correct the column names in "Table of 'competences' "
+                and in "Table of 'qualitesProfessionnelles' "
     TODO add streamlit pandas-profiling (see website)
     TODO tick/untick the 'competences' column to display missing values
                 => propagation to other 'buggy' tables ?
-    TODO deploy app to Heroku
+    TODO deploy app to Heroku or Streamlit
 """
 
 from datetime import date
@@ -147,46 +148,116 @@ st.header("Default Analysis")
 # This is to prepare the data for analysis
 # Importantly, we want to flatten  all the variables coming from a .JSON file
 # This is because there are some sections with nested dictionaries and lists
-# Run a basic search
-# A 'basic search'  targets all the data available from the API
-basic_search = client.search()
 
-# The basic search corresponds to three lists, namely:
-# - the `resultats`, which contains all the available data
-# - the `filtresPossibles`, which composed of four `filters` (or 'themes')
-#       -
-#       -
-#       -
-#       -
-# - the `Content-Range`, which indicates the number of hits from the search
 
-# Prepare the search output from a basic search
-results = basic_search["resultats"]
-filters = basic_search["filtresPossibles"]
-content_range = basic_search["Content-Range"]
+def start_search() -> dict:
+    """Run a basic search
+    A 'basic search'  targets all the data available from the API
 
-# Get the number of hits from the search
-content_max = content_range["max_results"]
+    Returns:
+        dict: _description_
+    """
+    basic_search = client.search()
+    return basic_search
+
+
+basic_search = start_search()
+
+
+def extract_search_content(search_session: dict) -> list:
+    """Prepare the search output from a basic search
+    The basic search corresponds to two lists and one dictionary, namely:
+    - the `resultats`, which contains all the available data
+    - the `filtresPossibles`, which composed of four `filters` (or 'themes')
+        -
+        -
+        -
+        -
+    - the `Content-Range`, which indicates the number of hits from the search
+
+    Args:
+        basic_search (dict): _description_
+
+    Returns:
+        list: _description_
+        dict:
+    """
+    results = search_session["resultats"]
+    filters = search_session["filtresPossibles"]
+    content_range = search_session["Content-Range"]
+    return results, filters, content_range
+
+
+(results, filters, content_range) = extract_search_content(
+    search_session=basic_search
+)
+
+
+def display_max_content(content_range: dict) -> str:
+    """Get the number of hits from the search
+
+    Args:
+        content_range (dict): _description_
+
+    Returns:
+        str: _description_
+    """
+    content_max = content_range["max_results"]
+    return content_max
+
+
+content_max = display_max_content(content_range=content_range)
+
 st.write(f"Total number of job offers: {content_max}")
 
 # -------------------------------------------------------------------------------------------
 
 # Prepare the data for data cleaning
+
 # Display the first raw result
 st.subheader("Search Output Preview of First Hit")
 search_preview = results[0]
 st.json(search_preview)  # delete ?
 
-# Transform results list into a dataframe
-st.subheader("Summary Table of First Five Hits")
-results_df = pd.DataFrame(results)
-AgGrid(results_df.iloc[0:5, :])
 
-# Extract a list of all columns in the dataframe
+def convert_search_results_to_dataframe(
+    search_results: list,
+) -> pd.DataFrame:
+    """Transform results list into a dataframe
+
+    Args:
+        results (list): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    results_df = pd.DataFrame(search_results)
+    return results_df
+
+
+results_df = convert_search_results_to_dataframe(search_results=results)
+
+st.subheader("Summary Table of First Five Hits")
+AgGrid(results_df.iloc[0:5, :], key=1)
+
+
+def extract_search_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Extract a list of all columns/categories in the dataframe
+
+    Args:
+        results_df (pd.DataFrame): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    category_list = pd.DataFrame(dataframe.columns)
+    category_list.columns = ["Categories"]
+    return category_list
+
+
+category_list = extract_search_categories(dataframe=results_df)
+
 st.write("List of all the categories in the database")
-category_list = pd.DataFrame(results_df.columns)
-category_list.columns = ["Categories"]
-# AgGrid(category_list)  # NOT working: argument of type 'int' is not iterable
 category_list
 
 # # Manually extract the dictionary variables from nested designs
@@ -197,168 +268,395 @@ category_list
 #     "salaire",
 #     "contact",
 #     "origineOffre",
-#     "competences",  # unpack a list - NOT working
-#     "langues",  # unpack a list - NOT working
+#     # "langues",  # unpack a list - NOT working
 #     # "qualitesProfessionnelles",  # unpack a list - NOT working
-#     # "formations",  # unpack a list - NOT working
+#     #  "competences",  # unpack a list - NOT working
+#     #   # "formations",  # unpack a list - NOT working
+#     # "formations", # unpack a list - NOT working
 #     # "permis",  # unpack a list - NOT working
 # ]
 # st.dataframe(columns_to_flatten)
 
+
+def flatten_category(dataframe: pd.DataFrame, category: str) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        category (str): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    flattened_category = dataframe[category].apply(pd.Series)
+    return flattened_category
+
+
 # Variable 'lieuTravail'
-st.write(
-    """
-    Flattening of 'lieuTravail' (sometimes buggy with
-    the 'libelle' variable, hence column not always showing)
-    """
+st.write("Category 'lieuTravail' ")
+
+flattened_lieu_travail = flatten_category(
+    dataframe=results_df, category="lieuTravail"
 )
-flatten_lieu_travail = results_df["lieuTravail"].apply(pd.Series)
-# flatten_lieu_travail[["departement", "ville"]] = flatten_lieu_travail[
-#     "libelle"
-# ].str.split("-", expand=True)
-flatten_lieu_travail = flatten_lieu_travail.drop(
-    "libelle",
-    # inplace=True,
-    axis=1,
+
+
+def extract_bound_categories(
+    dataframe: pd.DataFrame, category_to_extract: str, new_fields: list
+) -> pd.DataFrame:
+    """Extraction of columns with nested design
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        category_to_extract (str): _description_
+        new_fields (list): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    dataframe[new_fields] = dataframe[category_to_extract].str.split(
+        "-", expand=True
+    )
+    return dataframe
+
+
+flattened_lieu_travail = extract_bound_categories(
+    dataframe=flattened_lieu_travail,
+    category_to_extract="libelle",
+    new_fields=["departement", "ville"],
 )
-AgGrid(flatten_lieu_travail.iloc[0:5, :])
+
+
+def drop_unnecessary_categories(
+    dataframe: pd.DataFrame, category_list: list
+) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        category_list (list): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    dataframe = dataframe.drop(category_list, axis=1)
+    return dataframe
+
+
+flattened_lieu_travail = drop_unnecessary_categories(
+    dataframe=flattened_lieu_travail,
+    category_list=["libelle", "commune", "latitude", "longitude"],
+)
+AgGrid(flattened_lieu_travail.iloc[0:5, :], key=2)
+
 
 # Variable 'entreprise'
-flatten_entreprise = results_df["entreprise"].apply(pd.Series)
-flatten_entreprise.rename(
-    columns={"nom": "nomEntreprise", "description": "descriptionEntreprise"},
-    inplace=True,
+st.write("Category 'entreprise' ")
+
+flattened_entreprise = flatten_category(
+    dataframe=results_df, category="entreprise"
 )
 
+
+def rename_category(
+    dataframe: pd.DataFrame,
+    columns: dict,
+) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        columns (dict): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    dataframe.rename(columns=columns, inplace=True)
+    return dataframe
+
+
+flattened_entreprise = rename_category(
+    dataframe=flattened_entreprise,
+    columns={"nom": "nomEntreprise", "description": "descriptionEntreprise"},
+)
+
+flattened_entreprise = drop_unnecessary_categories(
+    dataframe=flattened_entreprise,
+    category_list=["logo", "url"],
+)
+AgGrid(flattened_entreprise.iloc[0:5, :], key=3)
+
+
 # Variable 'salaire'
-flatten_salaire = results_df["salaire"].apply(pd.Series)
-flatten_salaire.rename(columns={"libelle": "salaire"}, inplace=True)
+# not always present... needs to be hidden, sometimes
+st.write("Category 'salaire' ")
+
+flattened_salaire = flatten_category(dataframe=results_df, category="salaire")
+
+flattened_salaire = rename_category(
+    dataframe=flattened_salaire,
+    columns={"libelle": "salaire"},
+)
+
+flattened_salaire = drop_unnecessary_categories(
+    dataframe=flattened_salaire,
+    category_list=[
+        "complement1",
+        # "complement2",
+        "commentaire",
+    ],
+)
+AgGrid(flattened_salaire.iloc[0:5, :], key=4)
 
 # Variable 'contact'
-flatten_contact = results_df["contact"].apply(pd.Series)
-flatten_contact.rename(columns={"nom": "nomContact"}, inplace=True)
+st.write("Category 'contact' ")
+
+flattened_contact = flatten_category(dataframe=results_df, category="contact")
+
+flattened_contact = rename_category(
+    dataframe=flattened_contact,
+    columns={"nom": "nomContact"},
+)
+
+flattened_contact = drop_unnecessary_categories(
+    dataframe=flattened_contact,
+    category_list=[
+        "coordonnees1",
+        # "commentaire",  # NOT always in the searches
+        "urlPostulation",
+        "coordonnees2",
+        "coordonnees3",
+    ],
+)
+AgGrid(flattened_contact.iloc[0:5, :], key=5)  # NOT working ?
+
 
 # Variable 'origineOffre'
-flatten_origineOffre = results_df["origineOffre"].apply(pd.Series)
-flatten_origineOffre.rename(columns={"origine": "origineOffre"}, inplace=True)
+st.write("Category 'origineOffre' ")
 
-# # Variable 'langues'
-# flatten_langues = results_df["langues"].apply(pd.Series)
-# flatten_langues.rename(columns={"0": "langues"}, inplace=True)  # NOT working
+flattened_origineOffre = flatten_category(
+    dataframe=results_df, category="origineOffre"
+)
+
+flattened_origineOffre = rename_category(
+    dataframe=flattened_origineOffre,
+    columns={"origine": "origineOffre"},
+)
+AgGrid(flattened_origineOffre.iloc[0:5, :], key=6)
+
+
+# Variable 'langues'
+st.write("Category 'langues' ")
+
+flattened_langues = results_df["langues"].apply(pd.Series)
+flattened_langues.rename(columns={"0": "langues"}, inplace=True)  # NOT working
+
+st.table(flattened_langues.iloc[0:5, :])
+
 
 # Variable 'qualitesProfessionnelles'
-flatten_qualitesProfessionnelles = results_df[
-    "qualitesProfessionnelles"
-].apply(pd.Series)
-# Create automatic list of 'qualitesProfessionnelles' (problem w/ column name)
-qualitePro_columns = [
-    "qualitesPro %d" % i
-    for i in range(len(flatten_qualitesProfessionnelles.columns))
-]
-# Change column names to 'competences'
-st.write("Table of 'qualitePro' ")
-flatten_qualitesProfessionnelles.columns = [qualitePro_columns]
-flatten_qualitesProfessionnelles.rename(
+st.write("Category 'qualitesProfessionnelles' ")
+
+flattened_qualitesPro = flatten_category(
+    dataframe=results_df, category="qualitesProfessionnelles"
+)
+
+
+def rename_columns_auto(dataframe: pd.DataFrame, column_name: str) -> list:
+    """Create automatic list of 'qualitesPro' (problem w/ column name)
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        column_name (str): _description_
+
+    Returns:
+        list: _description_
+    """
+    auto_renamed_columns = [
+        f"{column_name} %d" % i for i in range(len(dataframe.columns))
+    ]
+    dataframe.columns = [auto_renamed_columns]
+    return dataframe
+
+
+flattened_qualitesPro = rename_columns_auto(
+    dataframe=flattened_qualitesPro, column_name="qualitesPro"
+)
+flattened_qualitesPro.iloc[0:5, :]
+
+# below NOT working
+flattened_qualitesPro = rename_category(
+    dataframe=flattened_qualitesPro,
     columns={
         "('qualitePro 0',)": "qualitePro_0",
         "('qualitePro 1',)": "qualitePro_1",
         "('qualitePro 2',)": "qualitePro_2",
     },
-    inplace=True,
-)  # NOT working
-flatten_qualitesProfessionnelles.iloc[0:5, :]
+)
+# flattened_qualitesPro.iloc[0:5, :]
+
 
 # Variable 'competences'
-flatten_competences = results_df["competences"].apply(pd.Series)
-# flatten_competences
-# Create automatic list of competences (problem with column name)
-competence_columns = [
-    "competences %d" % i for i in range(len(flatten_competences.columns))
-]
+st.write("Category 'competences' ")
 
-# Change column names of 'competences'
-st.write("Table of 'competences' ")
-flatten_competences.columns = [competence_columns]
+flattened_competences = flatten_category(
+    dataframe=results_df, category="competences"
+)
 
-# Below NOT working
-# Rename the columns from the 'competences' category
-flatten_competences.rename(
-    columns={"0": "competence 0"}, inplace=True
-)  # NOT working
+flattened_competences = rename_columns_auto(
+    dataframe=flattened_competences, column_name="competences"
+)
+flattened_competences.iloc[0:5, :]
+# Eventually, keep top 5 competences
 
-# AgGrid(flatten_competences.iloc[0:5, :])  # NOT working as cannot be tuple ?
-flatten_competences.iloc[0:5, :]
+# Variable 'permis'  # to be done
+
+
+# Variable 'formations'  # to be done
+
 
 # Drop the columns used for flattening
-st.write("Reduced Dataframe 'results_df'  Without Columns Used for Flattening")
-results_df_redux = results_df.drop(
-    [
-        "lieuTravail",
-        "entreprise",
-        "salaire",
-        "contact",
-        "origineOffre",
-        "qualitesProfessionnelles",
-        "competences",
-        # "langues",  # coding to be done as above
-        # "formations",  # coding to be done as above
-        # "permis",  # coding to be done as above
-    ],
-    axis=1,
+st.write(
+    "Reduced Dataframe 'results_df'  Without Categories Used for Flattening"
 )
-AgGrid(results_df_redux.iloc[0:5, :])
+
+categories_to_drop = [
+    "lieuTravail",
+    "entreprise",
+    "salaire",  # NOT always present... hence, hiding for now
+    "contact",
+    "origineOffre",
+    # "langues",  # NOT always present... hence, hiding for now
+    "qualitesProfessionnelles",
+    "competences",
+    #  "formations",  # coding to be done as above
+    # "permis",  # coding to be done as above
+]
+
+
+def drop_categories(dataframe: pd.DataFrame, drop_list: list) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        list (list): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    dataframe_drop = dataframe.drop(drop_list, axis=1)
+    return dataframe_drop
+
+
+results_df_redux = drop_categories(
+    dataframe=results_df, drop_list=categories_to_drop
+)
+AgGrid(results_df_redux.iloc[0:5, :], key=7)
+
 
 # Concatenation of the flattened tables
-st.write("Table of Flattened Columns")
-flattened_columns = (
-    flatten_lieu_travail,
-    flatten_entreprise,
-    flatten_salaire,
-    # flatten_contact,  # this could NOT be concatenated
-    # flatten_origineOffre,  # this could NOT be concatenated
-    # flatten_langues,  # flattening and renaming did NOT work
-    # flatten_qualitesProfessionnelles,  # bugs with missing data
-    # flatten_competences,  # bugs with missing data if included in the search
+st.write("Table of Flattened Categories")
+
+flattened_categories = [
+    flattened_lieu_travail,
+    flattened_entreprise,
+    flattened_salaire,
+    flattened_contact,  # this could NOT be concatenated
+    flattened_origineOffre,  # this could NOT be concatenated
+    flattened_langues,  # flattening and renaming did NOT work
+    flattened_qualitesPro,  # bugs with missing data
+    flattened_competences,  # bugs with missing data if included in the search
     # # hence, deactivate for now
-)
-results_df_flattened = pd.concat(flattened_columns, axis=1)
-results_df_flattened.iloc[0:5, :]
+    # flattened_formations,  # to be done
+    # flattened_permis,  # to be done
+]
+
+
+def concatenate_dataframes(column_list: list) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        column_list (list): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    dataframe = pd.concat(column_list, axis=1)
+    return dataframe
+
+
+results_df_flattened = concatenate_dataframes(column_list=flattened_categories)
+st.dataframe(results_df_flattened.iloc[0:5, :])
+
 
 # Concatenation of the flattened tables to the reduced 'results_df'
 st.write("Penultimate Table Including Reduced Dataframe and Flattened Tables")
-results_df_final = pd.concat([results_df_redux, results_df_flattened], axis=1)
-results_df_final.iloc[0:5, :]
+
+results_df_final = concatenate_dataframes(
+    column_list=[results_df_redux, results_df_flattened]
+)
+st.dataframe(results_df_final.iloc[0:5, :])
+
 
 # Prepare summary table of missing data
 st.write("Summary of Missing Data (buggy if 'competences' are included)")
 
-# Display missing values status for each column in a matrix
-missing_data_matrix = msno.matrix(
-    results_df_final,
-    sort="descending",  # NOT working
-    figsize=(10, 5),
-    fontsize=10,
-    sparkline=False,
-)
+
+def create_missing_data_matrix(dataframe: pd.DataFrame) -> object:
+    """Display missing values status for each column in a matrix
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+
+    Returns:
+        object: _description_
+    """
+    missing_data_matrix = msno.matrix(
+        dataframe,
+        sort="descending",  # NOT working
+        figsize=(10, 5),
+        fontsize=10,
+        sparkline=False,
+    )
+    return missing_data_matrix
+
+
+missing_data_matrix = create_missing_data_matrix(results_df_final)
+
+# Create matrix of missing data
 st.pyplot(missing_data_matrix.figure, key=1)
-# Display missing values status for each column in a bar chart
-missing_data_bars = msno.bar(
-    results_df_final,
-    sort="descending",
-    color="dodgerblue",
-    figsize=(10, 5),
-    fontsize=10,
-    # p=0.5,  # NOT working ?
-)
-# st.pyplot(missing_data_bars.figure, key=2)
+
+
+def create_missing_data_bars(dataframe: pd.DataFrame) -> object:
+    """Display missing values status for each column in a bar chart
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+
+    Returns:
+        object: _description_
+    """
+    missing_data_bars = msno.bar(
+        dataframe,
+        sort="descending",
+        color="dodgerblue",
+        figsize=(10, 15),
+        fontsize=10,
+    )
+    return missing_data_bars
+
+
+missing_data_bars = create_missing_data_bars(results_df_final)
+
+# Create bar chart of missing data
+st.pyplot(missing_data_bars.figure, key=2)
+
 
 st.write("Table of missing values in each category")
 st.text(
     """
     The following categories were not included in the missing data table
     below because they could not be flattened properly:
-        - competences
-        - qualitesProfessionnelles
+        -
     """
 )
 # Display percentage of missing data in a table
@@ -366,7 +664,7 @@ nan_table = results_df_final.stb.missing(clip_0=False)
 nan_table
 
 # # Delete unnecessary columns with over 50% of missing data per columns
-st.write("Final Table of Job offers")
+st.write("Final Table of Job Offers")
 # # Below  NOT working
 # results_df_final_redux = [
 #     results_df_final.drop(col)
@@ -377,22 +675,25 @@ st.write("Final Table of Job offers")
 # results_df_final_redux
 
 # Since above code not working, dropping unnecessary manually
+final_category_drop = [
+    "agence",  # does not always shows up in the analysis
+    "experienceCommentaire",  # does not always shows up in the analysis
+    "complement2",  # does not always shows up in the analysis
+    "deplacementCode",
+    "deplacementLibelle",
+    "permis",
+    "langues",  # does not always shows up in the analysis
+    "commentaire",  # does not always shows up in the analysis
+    "formations",
+    # "complement1",
+    # "logo",
+    # "url",
+    "descriptionEntreprise",
+]
+final_category_drop
+
 results_df_final_redux = results_df_final.drop(
-    [
-        # "agence",  # does not always shows up in the analysis
-        # "experienceCommentaire",  # does not always shows up in the analysis
-        # "complement2",  # does not always shows up in the analysis
-        "deplacementCode",
-        "deplacementLibelle",
-        "permis",
-        # "langues",  # does not always shows up in the analysis
-        "commentaire",  # does not always shows up in the analysis
-        "formations",
-        "complement1",
-        "logo",
-        "url",
-        "descriptionEntreprise",
-    ],
+    final_category_drop,
     axis=1,
 )
 AgGrid(results_df_final_redux)
@@ -779,7 +1080,7 @@ elif search_type == "Search based on values in categories":
 
     # Re-insert the 'id_offre' series to the 'salary_by_enterprise' dataframe
     salary_by_enterprise.insert(0, "id_offre", id_offre)
-    AgGrid(salary_by_enterprise, key=1)
+    AgGrid(salary_by_enterprise)
 
     # Drop the rows with missing data
     salary_by_enterprise = salary_by_enterprise.dropna()
@@ -790,7 +1091,7 @@ elif search_type == "Search based on values in categories":
             {len(salary_by_enterprise)}
         """
     )
-    AgGrid(salary_by_enterprise, key=2)
+    AgGrid(salary_by_enterprise)
 
     # # Convert the final dataframe to a '.csv' format string
     # # NOT working but works well with the next code block
