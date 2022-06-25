@@ -1,7 +1,10 @@
 """API of Pole Emploi
     Specifically, an API to consult available job offers.
 
+    TODO split the function 'def extract_search_content()'
+                into THREE different functions
     TODO better describe the sections and results
+    TODO fix the function 'drop_low_occurrence_categories'
     TODO build functions
                 TODO then, add cache function decorators, i.e.:
                 @st.cache  # to be uncommented when function is written
@@ -20,14 +23,13 @@
     TODO in basic search (or sidebar ?), add a column next to
                 'List of Categories' containing a definition of the categories;
                 e.g. scroll down list
-    TODO fix missing values table and data plot
-    TODO eventually, keep top 5 competences and qualitesProfessionnelles
+    TODO keep top 5 competences and qualitesProfessionnelles
     TODO the default minimum date cannot be set
     TODO correct the column names in "Table of 'competences' "
                 and in "Table of 'qualitesProfessionnelles' "
-    TODO add streamlit pandas-profiling (see website)
-    TODO tick/untick the 'competences' column to display missing values
-                => propagation to other 'buggy' tables ?
+    TODO add streamlit pandas-profiling (see Streamlit website)
+    TODO tick/untick the 'competences' and 'qualitesProfessionnelles' columns
+                in nan table to display missing values without these columns
     TODO deploy app to Heroku or Streamlit
 """
 
@@ -241,6 +243,9 @@ st.subheader("Summary Table of First Five Hits")
 AgGrid(results_df.iloc[0:5, :], key=1)
 
 
+st.write("List of all the categories in the database")
+
+
 def extract_search_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
     """Extract a list of all columns/categories in the dataframe
 
@@ -256,8 +261,6 @@ def extract_search_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 
 category_list = extract_search_categories(dataframe=results_df)
-
-st.write("List of all the categories in the database")
 category_list
 
 # # Manually extract the dictionary variables from nested designs
@@ -401,7 +404,7 @@ flattened_salaire = drop_unnecessary_categories(
     dataframe=flattened_salaire,
     category_list=[
         "complement1",
-        # "complement2",
+        "complement2",
         "commentaire",
     ],
 )
@@ -423,8 +426,8 @@ flattened_contact = drop_unnecessary_categories(
         "coordonnees1",
         # "commentaire",  # NOT always in the searches
         "urlPostulation",
-        "coordonnees2",
-        "coordonnees3",
+        # "coordonnees2",  # NOT always in the searches
+        # "coordonnees3",  # NOT always in the searches
     ],
 )
 AgGrid(flattened_contact.iloc[0:5, :], key=5)  # NOT working ?
@@ -525,7 +528,7 @@ categories_to_drop = [
     "salaire",  # NOT always present... hence, hiding for now
     "contact",
     "origineOffre",
-    # "langues",  # NOT always present... hence, hiding for now
+    "langues",  # NOT always present... hence, hiding for now
     "qualitesProfessionnelles",
     "competences",
     #  "formations",  # coding to be done as above
@@ -560,11 +563,13 @@ flattened_categories = [
     flattened_lieu_travail,
     flattened_entreprise,
     flattened_salaire,
-    flattened_contact,  # this could NOT be concatenated
-    flattened_origineOffre,  # this could NOT be concatenated
-    flattened_langues,  # flattening and renaming did NOT work
-    flattened_qualitesPro,  # bugs with missing data
-    flattened_competences,  # bugs with missing data if included in the search
+    flattened_contact,
+    flattened_origineOffre,
+    # flattened_langues,  # flattening and renaming did NOT work
+    # # also, bugs with missing data table. hence, deactivate for now
+    # flattened_qualitesPro,  # bugs with missing data table
+    # # hence, deactivate for now
+    # flattened_competences,  # bugs with missing data table
     # # hence, deactivate for now
     # flattened_formations,  # to be done
     # flattened_permis,  # to be done
@@ -620,7 +625,8 @@ def create_missing_data_matrix(dataframe: pd.DataFrame) -> object:
     return missing_data_matrix
 
 
-missing_data_matrix = create_missing_data_matrix(results_df_final)
+missing_data_matrix = create_missing_data_matrix(dataframe=results_df_final)
+
 
 # Create matrix of missing data
 st.pyplot(missing_data_matrix.figure, key=1)
@@ -647,50 +653,83 @@ def create_missing_data_bars(dataframe: pd.DataFrame) -> object:
 
 missing_data_bars = create_missing_data_bars(results_df_final)
 
+
 # Create bar chart of missing data
-st.pyplot(missing_data_bars.figure, key=2)
+st.pyplot(dataframe=missing_data_bars.figure, key=2)
 
 
 st.write("Table of missing values in each category")
+
+
+def create_missing_data_table(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Display percentage of missing data in a table
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+    """
+    nan_table = dataframe.stb.missing(clip_0=False)
+    return nan_table
+
+
 st.text(
     """
     The following categories were not included in the missing data table
     below because they could not be flattened properly:
-        -
+        - qualitesPro
+        - competences
     """
 )
-# Display percentage of missing data in a table
-nan_table = results_df_final.stb.missing(clip_0=False)
+
+nan_table = create_missing_data_table(dataframe=results_df_final)
 nan_table
 
-# # Delete unnecessary columns with over 50% of missing data per columns
+
 st.write("Final Table of Job Offers")
+
+
+def drop_low_occurrence_categories(
+    dataframe: pd.DataFrame, threshold: int = 50
+):
+    """Delete unnecessary columns with over 50% of missing data per columns
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        threshold (int, optional): _description_. Defaults to 50.
+
+    Returns:
+        _type_: _description_
+    """
+    dataframe_redux = [
+        dataframe.drop(col)
+        for col in dataframe.columns
+        if dataframe[col] > threshold
+    ]
+    return dataframe_redux
+
+
 # # Below  NOT working
-# results_df_final_redux = [
-#     results_df_final.drop(col)
-#     for col in results_df_final.columns
-#     if results_df_final[col] > 50
-# ]
-# AgGrid(results_df_final_redux)
+results_df_final_redux = drop_low_occurrence_categories(
+    dataframe=results_df_final
+)
 # results_df_final_redux
+# AgGrid(results_df_final_redux)
 
 # Since above code not working, dropping unnecessary manually
 final_category_drop = [
-    "agence",  # does not always shows up in the analysis
-    "experienceCommentaire",  # does not always shows up in the analysis
-    "complement2",  # does not always shows up in the analysis
+    # "agence",  # does not always shows up in the analysis
+    # "experienceCommentaire",  # does not always shows up in the analysis
+    # "complement2",  # does not always shows up in the analysis
     "deplacementCode",
     "deplacementLibelle",
     "permis",
-    "langues",  # does not always shows up in the analysis
-    "commentaire",  # does not always shows up in the analysis
+    # "langues",  # does not always shows up in the analysis
+    # "commentaire",  # does not always shows up in the analysis
     "formations",
-    # "complement1",
-    # "logo",
-    # "url",
+    # "complement1",  # does not always shows up in the analysis
+    # "logo",  # does not always shows up in the analysis
+    # "url",  # does not always shows up in the analysis
     "descriptionEntreprise",
 ]
-final_category_drop
 
 results_df_final_redux = results_df_final.drop(
     final_category_drop,
@@ -706,24 +745,24 @@ st.markdown("---")
 # from st_aggrid.shared import GridUpdateMode
 
 
-# def aggrid_interactive_table(df: pd.DataFrame):
+# def aggrid_interactive_table(dataframe: pd.DataFrame):
 #     """Creates an st-aggrid interactive table based on a dataframe.
 
 #     Args:
-#         df (pd.DataFrame]): Source dataframe
+#         dataframe (pd.DataFrame]): Source dataframe
 
 #     Returns:
 #         dict: The selected row
 #     """
 #     options = GridOptionsBuilder.from_dataframe(
-#         df, enableRowGroup=True, enableValue=True, enablePivot=True
+#         dataframe, enableRowGroup=True, enableValue=True, enablePivot=True
 #     )
 
 #     options.configure_side_bar()
 
 #     options.configure_selection("single")
 #     selection = AgGrid(
-#         df,
+#         dataframe,
 #         enable_enterprise_modules=True,
 #         gridOptions=options.build(),
 #         theme="light",
@@ -738,7 +777,7 @@ st.markdown("---")
 #     "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv"
 # )
 
-# selection = aggrid_interactive_table(df=iris)
+# selection = aggrid_interactive_table(dataframe=iris)
 
 # if selection:
 #     st.write("You selected:")
