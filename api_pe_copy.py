@@ -7,8 +7,6 @@
     TODO better describe the sections and results
     TODO fix the function 'drop_low_occurrence_categories'
     TODO build functions
-                TODO then, add cache function decorators, i.e.:
-                @st.cache  # to be uncommented when function is written
     TODO keep 'st.json()' objects?
     TODO avoid hard-coding the categories (not elegant)
     TODO IMPORTANT !!
@@ -167,6 +165,7 @@ st.header("Default Analysis")
 # This is because there are some sections with nested dictionaries and lists
 
 
+# @st.cache
 def start_search(params: dict = None) -> dict:
     # fix type hints for the content of the dict
     """_summary_
@@ -184,6 +183,7 @@ def start_search(params: dict = None) -> dict:
 basic_search = start_search()
 
 
+# @st.cache
 def extract_search_content(search_session: dict) -> list[int]:
     # fix type hints for the content of each dict
     """Prepare the search output from a basic search
@@ -261,7 +261,7 @@ def convert_search_results_to_dataframe(
 results_df = convert_search_results_to_dataframe(search_results=results)
 
 st.subheader("Summary Table of First Five Hits")
-AgGrid(results_df.iloc[0:5, :], key=1)
+results_df.iloc[0:5, :]
 
 
 st.write("List of all the categories in the database")
@@ -301,6 +301,7 @@ category_list
 # st.dataframe(columns_to_flatten)
 
 
+# @st.cache(allow_output_mutation=True)
 def flatten_category(dataframe: pd.DataFrame, category: str) -> pd.DataFrame:
     """_summary_
 
@@ -316,13 +317,12 @@ def flatten_category(dataframe: pd.DataFrame, category: str) -> pd.DataFrame:
 
 
 # Variable 'lieuTravail'
-st.write("Category 'lieuTravail' ")
-
 flattened_lieu_travail = flatten_category(
     dataframe=results_df, category="lieuTravail"
 )
 
 
+# @st.cache
 def extract_bound_categories(
     dataframe: pd.DataFrame,
     category_to_extract: str,
@@ -351,42 +351,13 @@ flattened_lieu_travail = extract_bound_categories(
 )
 
 
-def drop_unnecessary_categories(
-    dataframe: pd.DataFrame, category_list: list[str]
-) -> pd.DataFrame:
-    """_summary_
-
-    Args:
-        dataframe (pd.DataFrame): _description_
-        category_list (list): _description_
-
-    Returns:
-        pd.DataFrame: _description_
-    """
-    dataframe = dataframe.drop(category_list, axis=1)
-    return dataframe
-
-
-flattened_lieu_travail = drop_unnecessary_categories(
-    dataframe=flattened_lieu_travail,
-    category_list=[
-        "libelle",
-        "commune",
-        "latitude",
-        "longitude"
-    ],
-)
-AgGrid(flattened_lieu_travail.iloc[0:5, :], key=2)
-
-
 # Variable 'entreprise'
-st.write("Category 'entreprise' ")
-
 flattened_entreprise = flatten_category(
     dataframe=results_df, category="entreprise"
 )
 
 
+# @st.cache
 def rename_category(
     dataframe: pd.DataFrame,
     columns: dict[str, str],
@@ -409,17 +380,9 @@ flattened_entreprise = rename_category(
     columns={"nom": "nomEntreprise", "description": "descriptionEntreprise"},
 )
 
-flattened_entreprise = drop_unnecessary_categories(
-    dataframe=flattened_entreprise,
-    category_list=["logo", "url"],
-)
-AgGrid(flattened_entreprise.iloc[0:5, :], key=3)
-
 
 # Variable 'salaire'
 # not always present... needs to be hidden, sometimes
-st.write("Category 'salaire' ")
-
 flattened_salaire = flatten_category(dataframe=results_df, category="salaire")
 
 flattened_salaire = rename_category(
@@ -427,19 +390,8 @@ flattened_salaire = rename_category(
     columns={"libelle": "salaire"},
 )
 
-flattened_salaire = drop_unnecessary_categories(
-    dataframe=flattened_salaire,
-    category_list=[
-        "complement1",
-        # "complement2",
-        "commentaire",
-    ],
-)
-AgGrid(flattened_salaire.iloc[0:5, :], key=4)
 
 # Variable 'contact'
-st.write("Category 'contact' ")
-
 flattened_contact = flatten_category(dataframe=results_df, category="contact")
 
 flattened_contact = rename_category(
@@ -447,22 +399,8 @@ flattened_contact = rename_category(
     columns={"nom": "nomContact"},
 )
 
-flattened_contact = drop_unnecessary_categories(
-    dataframe=flattened_contact,
-    category_list=[
-        "coordonnees1",
-        # "commentaire",  # NOT always in the searches
-        "urlPostulation",
-        # "coordonnees2",  # NOT always in the searches
-        # "coordonnees3",  # NOT always in the searches
-    ],
-)
-AgGrid(flattened_contact.iloc[0:5, :], key=5)  # NOT working ?
-
 
 # Variable 'origineOffre'
-st.write("Category 'origineOffre' ")
-
 flattened_origineOffre = flatten_category(
     dataframe=results_df, category="origineOffre"
 )
@@ -471,26 +409,22 @@ flattened_origineOffre = rename_category(
     dataframe=flattened_origineOffre,
     columns={"origine": "origineOffre"},
 )
-AgGrid(flattened_origineOffre.iloc[0:5, :], key=6)
 
 
-# Variable 'langues'
-st.write("Category 'langues' ")
-
+# Variable 'langues'  # to be (re)done
 # flattenerd_langues = results_df["langues"].apply(pd.Series)
-# flattened_langues.rename(columns={"0": "langues"}, inplace=True) # NOT workin
+# flattened_langues.rename(columns={"0": "langues"}, inplace=True)  # NOT work
 
 # st.table(flattened_langues.iloc[0:5, :])
 
 
 # Variable 'qualitesProfessionnelles'
-st.write("Category 'qualitesProfessionnelles' ")
-
 flattened_qualitesPro = flatten_category(
     dataframe=results_df, category="qualitesProfessionnelles"
 )
 
 
+# @st.cache
 def rename_columns_auto(dataframe: pd.DataFrame, column_name: str) -> list:
     """Create automatic list of 'qualitesPro' (problem w/ column name)
 
@@ -511,7 +445,7 @@ def rename_columns_auto(dataframe: pd.DataFrame, column_name: str) -> list:
 flattened_qualitesPro = rename_columns_auto(
     dataframe=flattened_qualitesPro, column_name="qualitesPro"
 )
-flattened_qualitesPro.iloc[0:5, :]
+# flattened_qualitesPro.iloc[0:5, :]
 
 # below NOT working
 flattened_qualitesPro = rename_category(
@@ -526,8 +460,6 @@ flattened_qualitesPro = rename_category(
 
 
 # Variable 'competences'
-st.write("Category 'competences' ")
-
 flattened_competences = flatten_category(
     dataframe=results_df, category="competences"
 )
@@ -535,20 +467,27 @@ flattened_competences = flatten_category(
 flattened_competences = rename_columns_auto(
     dataframe=flattened_competences, column_name="competences"
 )
-flattened_competences.iloc[0:5, :]
-# Eventually, keep top 5 competences
-
-# Variable 'permis'  # to be done
+# flattened_competences.iloc[0:5, :]
+# Eventually, keep top 5 competences ?
 
 
-# Variable 'formations'  # to be done
-
-
-# Drop the columns used for flattening
-st.write(
-    "Reduced Dataframe 'results_df'  Without Categories Used for Flattening"
+# Variable 'permis'
+flattened_permis = flatten_category(
+    dataframe=results_df, category="permis"
 )
+# flattened_permis.iloc[0:5, :]
 
+
+# Variable 'formations'
+flattened_formations = flatten_category(
+    dataframe=results_df, category="formations"
+)
+# flattened_formations.iloc[0:5, :]
+
+
+# Drop  columns (used for flattening & unnecessary)
+# This will be performed in two steps:
+# 1) Drop columns used for flattening categories
 categories_to_drop = [
     "lieuTravail",
     "entreprise",
@@ -558,11 +497,12 @@ categories_to_drop = [
     # "langues",  # NOT always present... hence, hiding for now
     "qualitesProfessionnelles",
     "competences",
-    #  "formations",  # coding to be done as above
-    # "permis",  # coding to be done as above
+    # "formations",  # shows error when active
+    # "permis",  # shows error when active
 ]
 
 
+# @st.cache
 def drop_categories(
     dataframe: pd.DataFrame,
     drop_list: list[str]
@@ -584,12 +524,10 @@ def drop_categories(
 results_df_redux = drop_categories(
     dataframe=results_df, drop_list=categories_to_drop
 )
-AgGrid(results_df_redux.iloc[0:5, :], key=7)
 
 
-# Concatenation of the flattened tables
-st.write("Table of Flattened Categories")
-
+# 2) Drop columns not important for the rest of the analysis,
+# after concatenation of the flattened tables
 flattened_categories = [
     flattened_lieu_travail,
     flattened_entreprise,
@@ -602,11 +540,12 @@ flattened_categories = [
     # # hence, deactivate for now
     # flattened_competences,  # bugs with missing data table
     # # hence, deactivate for now
-    # flattened_formations,  # to be done
-    # flattened_permis,  # to be done
+    # flattened_formations,  # shows error when active
+    # flattened_permis,  # shows error when active
 ]
 
 
+# @st.cache(allow_output_mutation=True)
 def concatenate_dataframes(column_list: list[str]) -> pd.DataFrame:
     """_summary_
 
@@ -621,22 +560,46 @@ def concatenate_dataframes(column_list: list[str]) -> pd.DataFrame:
 
 
 results_df_flattened = concatenate_dataframes(column_list=flattened_categories)
-st.dataframe(results_df_flattened.iloc[0:5, :])
+
+
+flattened_category_drop = [
+    "libelle",
+    "commune",
+    "latitude",
+    "longitude",
+    "logo",
+    "url",
+    "complement1",
+    "complement2",
+    "commentaire",
+    "coordonnees1",
+    "commentaire",  # NOT always in the searches
+    "urlPostulation",
+    "coordonnees2",  # NOT always in the searches
+    "coordonnees3",  # NOT always in the searches
+]
+
+results_df_reduced = drop_categories(
+    dataframe=results_df_flattened, drop_list=flattened_category_drop
+)
+# results_df_reduced.iloc[0:5, :]
 
 
 # Concatenation of the flattened tables to the reduced 'results_df'
-st.write("Penultimate Table Including Reduced Dataframe and Flattened Tables")
+st.write("Table of Job Offers")
 
 results_df_final = concatenate_dataframes(
-    column_list=[results_df_redux, results_df_flattened]
+    column_list=[results_df_redux, results_df_reduced]
 )
-st.dataframe(results_df_final.iloc[0:5, :])
+AgGrid(results_df_final)
 
 
 # Prepare summary table of missing data
-st.write("Summary of Missing Data (buggy if 'competences' are included)")
+st.write("Summary of Missing Data")
+# buggy if 'competences' are included
 
 
+# @st.cache
 def create_missing_data_matrix(dataframe: pd.DataFrame) -> object:
     # fix type hints for the content of the 'object'
     """Display missing values status for each column in a matrix
@@ -659,41 +622,14 @@ def create_missing_data_matrix(dataframe: pd.DataFrame) -> object:
 
 missing_data_matrix = create_missing_data_matrix(dataframe=results_df_final)
 
-
 # Create matrix of missing data
 st.pyplot(missing_data_matrix.figure, key=1)
-
-
-def create_missing_data_bars(dataframe: pd.DataFrame) -> object:
-    # fix type hints for the content of the 'object'
-    """Display missing values status for each column in a bar chart
-
-    Args:
-        dataframe (pd.DataFrame): _description_
-
-    Returns:
-        object: _description_
-    """
-    missing_data_bars = msno.bar(
-        dataframe,
-        sort="descending",
-        color="dodgerblue",
-        figsize=(10, 15),
-        fontsize=10,
-    )
-    return missing_data_bars
-
-
-missing_data_bars = create_missing_data_bars(results_df_final)
-
-
-# Create bar chart of missing data
-st.pyplot(dataframe=missing_data_bars.figure, key=2)
 
 
 st.write("Table of missing values in each category")
 
 
+# @st.cache
 def create_missing_data_table(dataframe: pd.DataFrame) -> pd.DataFrame:
     """Display percentage of missing data in a table
 
@@ -704,28 +640,27 @@ def create_missing_data_table(dataframe: pd.DataFrame) -> pd.DataFrame:
     return nan_table
 
 
-st.text(
-    """
-    The following categories were not included in the missing data table
-    below because they could not be flattened properly:
-        - qualitesPro
-        - competences
-    """
-)
+# st.text(
+#     """
+#     The following categories were not included in the missing data table
+#     below because they could not be flattened properly:
+#         - qualitesPro
+#         - competences
+#     """
+# )
 
 nan_table = create_missing_data_table(dataframe=results_df_final)
 nan_table
 
 
-# alternatively, a menu with all categories is displayed, and user 'unticks'
-# the unwanted values (see next section too)
-st.write(results_df_redux.columns)
-st.selectbox("pick me", results_df_redux.columns)
-# st.multiselect(label="Remove categories", options=results_df_redux.columns)
-# # 'multiselect' NOT working
-
-
 st.write("Final Table of Job Offers")
+
+# # a menu with all categories is displayed, and user 'unticks'
+# # the unwanted values (see next section too)
+# st.multiselect(
+#     label="Deselect variables with a high number of missing values",
+#     options=results_df_final.columns
+# )
 
 
 # def drop_low_occurrence_categories(
@@ -749,34 +684,41 @@ st.write("Final Table of Job Offers")
 
 
 # # Below  NOT working
+# # st.write("Delete columns with more than 10% of missing values")
 # results_df_final_redux = drop_low_occurrence_categories(
-#     dataframe=results_df_final
+#     dataframe=results_df_final,
+#     threshold=10,
 # )
 # results_df_final_redux
 # AgGrid(results_df_final_redux)
 
 # Since above code not working, dropping unnecessary manually
 final_category_drop = [
-    # "agence",  # does not always shows up in the analysis
-    # "experienceCommentaire",  # does not always shows up in the analysis
-    # "complement2",  # does not always shows up in the analysis
-    # "deplacementCode",
-    # "deplacementLibelle",
-    # "permis",
-    # "langues",  # does not always shows up in the analysis
-    # "commentaire",  # does not always shows up in the analysis
+    # "telephone",  # does not always shows up in the analysis
+    "experienceCommentaire",  # does not always shows up in the analysis
+    "complementExercice",  # does not always shows up in the analysis
+    "deplacementCode",
+    "deplacementLibelle",
+    "langues",  # does not always shows up in the analysis
+    "agence",  # does not always shows up in the analysis
     "formations",
-    # "complement1",  # does not always shows up in the analysis
-    # "logo",  # does not always shows up in the analysis
-    # "url",  # does not always shows up in the analysis
     "descriptionEntreprise",
+    "courriel",
+    "nomContact",
+    "permis",
 ]
 
-results_df_final_redux = results_df_final.drop(
-    final_category_drop,
-    axis=1,
+results_df_final_redux = drop_categories(
+    dataframe=results_df_final, drop_list=final_category_drop,
 )
 AgGrid(results_df_final_redux)
+
+
+st.write("Final Summary of Missing Data")
+missing_data_matrix_final = create_missing_data_matrix(
+    dataframe=results_df_final_redux
+)
+st.pyplot(missing_data_matrix_final.figure, key=2)
 
 st.markdown("---")
 
@@ -877,6 +819,22 @@ def filter_categories(
     return filtered_category
 
 
+filter_names = [
+    "typeContrat",
+    "experience",
+    "qualification",
+    "natureContrat"
+]
+
+
+# def apply_filter(dataframe=filters_df):
+#     for _ in filter_names:
+#         filters_df = filter_categories(
+#             dataframe=filters_df, filter_name="typeContrat"
+#     )
+
+
+# add loop (see above)
 contract_type_df = filter_categories(
     dataframe=filters_df, filter_name="typeContrat"
 )
@@ -973,6 +931,12 @@ if search_type == "Search based on dates and keywords":
     # Run a custom search  based on dates and keywords
     st.subheader("Search based on dates and keywords")
 
+    # Display an error message in case the date range is not of at least 1 day
+    st.error(
+        """
+        Please choose a date range of at least ONE day.
+        """
+    )
     # Custom settings
     # Set a default date to avoid error message when loading the page as the
     # date menu will ask for 'maxCreationDate ' superior to 'minCreationDate '
@@ -1014,15 +978,6 @@ if search_type == "Search based on dates and keywords":
     # Set-up the search parameters
     key_words = st.text_input(
         label="Enter One or More Keywords, e.g. data analyst, bi"
-    )
-
-    # Display an error message in case the date range is not of at least 1 day
-    st.error(
-        """
-        If an error message appears below, it is likely that the start and
-        end dates are the same.\n
-        Please choose a range of at least ONE day.
-        """
     )
 
     # Pass on the parameters of the search
