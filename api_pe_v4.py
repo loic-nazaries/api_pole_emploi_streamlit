@@ -9,22 +9,23 @@
     extract content, i.e. the flattened categories.
 
     Also, the analytical functions were moved to the 'functions.py' file.
-    They are now called via 'import functions'.
+    They are now called via 'import custom_functions'.
+    
+    Added a new botton to clear the categories loaded by default in the
+    analysis by keywords and categories.
+    
+    Added a function to convert dataframe content into html-styled tables.
 
-    TODO build functions
-    TODO move all functions in a different .py file/package
     TODO split the function 'def extract_search_content()'
                 into THREE different functions
-    TODO merge the custom search types into one
+    TODO merge the custom search types into one ?
     TODO better describe the sections and results
     TODO fix the function 'drop_low_occurrence_categories'
     TODO avoid hard-coding the categories (not elegant + prone to bugs)
     TODO IMPORTANT !!
                 fix the issue that top 150 hits is the limit for  search output
-    TODO fix output format after filtering the categories (flatten out dicts)
-                TODO then, select a category and add a filter for numerical &
+    TODO select a category and add a filter for numerical &
                 non-numerical filters (using sliders and number inputs)
-    TODO add progress bar when saving files ?
     TODO modify exception/error in date range to print out following message:
                 st.error(
                     '''If an error message appears below, it is likely that
@@ -42,8 +43,8 @@
     TODO the default minimum date cannot be set
     TODO correct column names for flattened 'competences' and 'qualitesPro'
     TODO add streamlit pandas-profiling (see Streamlit website)
-    TODO set up email address to report a bug
-    TODO deploy app to Heroku or Streamlit Community
+    TODO set up email address or web client to report a bug
+    TODO deploy app to Heroku or Streamlit Community + try Voila
 """
 
 from datetime import date
@@ -194,12 +195,34 @@ if search_type == "Default analysis":
         search_results=results
     )
 
+    # Display the initial table of job offers
+    st.subheader("Initial table of job offers")
+
+    # Build a paginated html-styled table
+    # This is how the function should be called, otherwise it won't work
+    cf.convert_df_to_html_table(results_df)
+
+    # Extract column names into a list
     st.subheader("List of the categories in the database")
 
     # Produce a list of variables within the database
     category_list = cf.extract_search_categories(
         dataframe=results_df)
     category_list
+
+    # # Display  above section on different tabs
+    # # Below NOT working
+    # tab1, tab2, tab3 = st.tabs([
+    #     "Job offers",
+    #     "List of categories",
+    #     "Definition of category values" # or move elsewhere like on sidebar?
+    # ])
+    # with tab1:
+    #     st.subheader("Initial table of job offers")
+    #     cf.convert_df_to_html_table(results_df)
+    # with tab2:
+    #     st.subheader("List of the categories in the database")
+    #     category_list
 
     # Variable 'lieuTravail.libelle'
     # Extract the words separated by a '-'
@@ -209,28 +232,28 @@ if search_type == "Default analysis":
         new_fields=["departement", "ville"],
     )
 
-    # Variable 'langues'
-    # st.write("langues")
-    # Extract the categories WITHIN the category
-    flattened_langues = cf.flatten_category(
-        dataframe=results_df, category="langues"
-    )
+    # # Variable 'langues'
+    # # st.write("langues")
+    # # Extract the categories WITHIN the category
+    # flattened_langues = cf.flatten_category(
+    #     dataframe=results_df, category="langues"
+    # )
 
-    # Rename automatically the categories previously extracted
-    flattened_langues = cf.rename_columns_auto(
-        dataframe=flattened_langues,
-        column_name="langues"
-    )
+    # # Rename automatically the categories previously extracted
+    # flattened_langues = cf.rename_columns_auto(
+    #     dataframe=flattened_langues,
+    #     column_name="langues"
+    # )
 
-    # Below NOT working
-    # Rename specific categories
-    flattened_langues = cf.rename_category(
-        dataframe=flattened_langues,
-        columns={
-            "('langues 0',)": "langues_0",
-            "('langues 1',)": "langues_1",
-        },
-    )
+    # # Below NOT working
+    # # Rename specific categories
+    # flattened_langues = cf.rename_category(
+    #     dataframe=flattened_langues,
+    #     columns={
+    #         "('langues 0',)": "langues_0",
+    #         "('langues 1',)": "langues_1",
+    #     },
+    # )
 
     # Variable 'qualitesProfessionnelles'
     # st.write("qualitesProfessionnelles")
@@ -290,7 +313,7 @@ if search_type == "Default analysis":
     # Note: the 'id' column was added to apply the '.merge()' function later
     flattened_categories = [
         results_df["id"],
-        flattened_langues,
+        # flattened_langues,
         flattened_qualitesPro,
         flattened_competences,
         flattened_permis,
@@ -359,7 +382,6 @@ if search_type == "Default analysis":
 
     # Since above code not working, dropping unnecessary manually
     category_drop = [
-        "langues",
         "qualitesProfessionnelles",
         "competences",
         "permis",
@@ -367,13 +389,13 @@ if search_type == "Default analysis":
         "formations",
         # "('formations 0',)",
         # "('formations 1',)",
-        "contact.commentaire",
+        # "contact.commentaire",
         "salaire.complement2",
         "contact.telephone",
         # "experienceCommentaire",
         "contact.coordonnees3",
         "contact.coordonnees2",
-        "langues",
+        # "langues",
         # "('langues 0',)",
         # "('langues 1',)",
         "salaire.commentaire",
@@ -425,7 +447,7 @@ if search_type == "Default analysis":
     st.write(f"Total number of job offers: {len(results_df_redux)}")
 
     # Save the search output
-    st.download_button(
+    save_output = st.download_button(
         label="Save results",
         data=results_df_redux.to_csv().encode("utf-8"),
         file_name="table_job_offer.csv",
@@ -433,6 +455,10 @@ if search_type == "Default analysis":
         help="The file will be saved in your default directory",
         key=1,
     )
+    if save_output:
+        with st.spinner(text="Saving..."):
+            time.sleep(2)
+        st.success("File saved.")
 
     st.markdown("---")
 
@@ -614,64 +640,66 @@ if search_type == "Search based on dates and keywords":
 elif search_type == "Search based on values in categories":
     st.subheader("Search based on values in categories")
 
-    # # IMPORTANT: I could not worked out yet how to isolate the column names,
-    # # hence they were hard-coded below
-    # # use columns of the concatenated list of flattened variables instead ?
-    # category_list = [
-    #     "id",
-    #     "intitule",
-    #     "description",
-    #     "dateCreation",
-    #     "dateActualisation",
-    #     "lieuTravail",
-    #     "departement",
-    #     "ville",
-    #     "romeCode",
-    #     "romeLibelle",
-    #     "appellationlibelle",
-    #     # "entreprise",
-    #     "nomEntreprise",
-    #     "descriptionEntreprise",
-    #     "typeContrat",
-    #     "typeContratLibelle",
-    #     "natureContrat",
-    #     "experienceExige",
-    #     "experienceLibelle",
-    #     "competences",
-    #     "salaire",
-    #     "dureeTravailLibelle",
-    #     "dureeTravailLibelleConverti",
-    #     "alternance",
-    #     # "contact",
-    #     "nomContact",
-    #     "nombrePostes",
-    #     "accessibleTH",
-    #     "qualificationCode",
-    #     "qualificationLibelle",
-    #     "secteurActivite",
-    #     "secteurActiviteLibelle",
-    #     "qualitesProfessionnelles",
-    #     "origineOffre",
-    #     "offresManqueCandidats",
-    #     "langues",
-    #     "formations",
-    #     "deplacementCode",
-    #     "deplacementLibelle",
-    #     "agence",
-    #     "permis",
-    #     "experienceCommentaire",
-    # ]
-    category_list = cf.extract_search_categories(
-        dataframe=results_df_redux
-    )
-    category_list
+    # IMPORTANT: I could not worked out yet how to isolate the column names,
+    # hence they were hard-coded below
+    # use columns of the concatenated list of flattened variables instead ?
+    category_list = [
+        "id",
+        "intitule",
+        "description",
+        "dateCreation",
+        "dateActualisation",
+        "lieuTravail",
+        "departement",
+        "ville",
+        "romeCode",
+        "romeLibelle",
+        "appellationlibelle",
+        # "entreprise",
+        "nomEntreprise",
+        "descriptionEntreprise",
+        "typeContrat",
+        "typeContratLibelle",
+        "natureContrat",
+        "experienceExige",
+        "experienceLibelle",
+        "competences",
+        "salaire",
+        "dureeTravailLibelle",
+        "dureeTravailLibelleConverti",
+        "alternance",
+        # "contact",
+        "nomContact",
+        "nombrePostes",
+        "accessibleTH",
+        "qualificationCode",
+        "qualificationLibelle",
+        "secteurActivite",
+        "secteurActiviteLibelle",
+        "qualitesProfessionnelles",
+        "origineOffre",
+        "offresManqueCandidats",
+        "langues",
+        "formations",
+        "deplacementCode",
+        "deplacementLibelle",
+        "agence",
+        "permis",
+        "experienceCommentaire",
+    ]
+
+    # # Below NOT working
+    # category_list = cf.extract_search_categories(
+    #     dataframe=results_df_redux
+    # )
+    # category_list
 
     # Sort list of categories and change column name
     category_list.sort(reverse=False)
     # Change list name
     list_categories = {"Final list of categories": category_list}
     # Display list of categories on the left-side panel
-    st.sidebar.dataframe(list_categories)
+    st.sidebar.dataframe(list_categories)  # delete ?
 
     # Set-up the search parameters
     # Default search
@@ -686,16 +714,38 @@ elif search_type == "Search based on values in categories":
         """
     )
 
+    # Input key words
     key_words = st.text_input(
         label="Enter One or More Keywords, e.g. data analyst, bi"
     )
-    # select_columns = st.multiselect(
-    #     label="Select one or more categories", options=category_list
-    # )
-    parameters = {
-        "motsCles": key_words,
-        # "categories": select_columns,
-    }
+    key_words
+
+    # Select/deselect categories
+    # Click a button to clear the selected categories
+    container = st.container()
+    clear_categories = st.button(label="Clear categories")
+    # All options are selected by default (no click of button)
+    if not clear_categories:
+        selected_categories = container.multiselect(
+            label="Select/Deselect one or more categories",
+            options=category_list,
+            default=category_list,
+        )
+    # The selected categories are cleared when clicking the button
+    else:
+        selected_categories = container.multiselect(
+            label="Select/Deselect one or more categories",
+            options=category_list,
+        )
+    # There is a bug as when clearing the categories and selecting more than
+    # one back, all categories are automatically re-selected
+
+    # Merge search parameters
+    # # Use coded objects above
+    # parameters = {
+    #     "motsCles": key_words,
+    #     "categories": selected_categories,
+    # }
     # Use hard-coded parameters for now
     parameters = {
         "motsCles": {
@@ -711,20 +761,16 @@ elif search_type == "Search based on values in categories":
     search_categories = cf.start_search(
         api_client=client, params=parameters)
 
+    # Prepare search results
+    results = search_categories["resultats"]
+
+    # Transform results list into a dataframe
+    st.subheader("Summary Table")
+
     # Get the number of hits from the search
     content_range = search_categories["Content-Range"]
     st.write(f"Total number of job offers: {content_range['max_results']}")
 
-    # Prepare search results
-    results = search_categories["resultats"]
-
-    # Display the first result
-    st.subheader("Search Output Preview of First Hit")
-    search_categories_preview = results[0:1]
-    st.json(search_categories_preview)
-
-    # Transform results list into a dataframe
-    st.subheader("Summary Table")
     results_df_from_categories = pd.DataFrame(results)
     AgGrid(results_df_from_categories)
 

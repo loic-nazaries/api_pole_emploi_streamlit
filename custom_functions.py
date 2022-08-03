@@ -6,6 +6,8 @@ into THREE different functions
 
 import streamlit as st
 import pandas as pd
+from st_aggrid import AgGrid
+from st_aggrid.grid_options_builder import GridOptionsBuilder
 import sidetable as stb
 import missingno as msno
 import altair as alt
@@ -81,6 +83,34 @@ def convert_search_results_to_dataframe(
     """
     dataframe = pd.json_normalize(search_results)
     return dataframe
+
+
+def convert_df_to_html_table(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    gridbuilder = GridOptionsBuilder.from_dataframe(dataframe)
+    gridbuilder.configure_pagination()
+    gridbuilder.configure_side_bar()
+    gridbuilder.configure_default_column(
+        groupable=True,
+        value=True,
+        enableRowGroup=True,
+        aggFunc="sum",
+        editable=True,
+    )
+    gridOptions = gridbuilder.build()
+    html_table = AgGrid(
+        dataframe,
+        gridOptions=gridOptions,
+        enable_enterprise_modules=True,
+    )
+    return html_table
 
 
 def extract_search_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -337,6 +367,7 @@ if __name__ == "__main__":
     extract_search_content()
     display_max_content()
     convert_search_results_to_dataframe()
+    convert_df_to_html_table()
     extract_search_categories()
     extract_linked_categories()
     rename_category()
