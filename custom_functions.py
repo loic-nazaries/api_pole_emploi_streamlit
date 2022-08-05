@@ -282,7 +282,7 @@ def create_missing_data_matrix(dataframe: pd.DataFrame) -> object:
         dataframe,
         sort="descending",  # NOT working
         figsize=(10, 5),
-        fontsize=10,
+        fontsize=8,
         sparkline=False,
     )
     return missing_data_matrix

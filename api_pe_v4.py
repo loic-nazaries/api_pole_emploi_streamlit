@@ -10,10 +10,10 @@
 
     Also, the analytical functions were moved to the 'functions.py' file.
     They are now called via 'import custom_functions'.
-    
+
     Added a new botton to clear the categories loaded by default in the
     analysis by keywords and categories.
-    
+
     Added a function to convert dataframe content into html-styled tables.
 
     TODO split the function 'def extract_search_content()'
@@ -185,10 +185,10 @@ if search_type == "Default analysis":
 
     # DATA CLEANING
 
-    # Display the first raw result
-    st.subheader("Search Output Preview of First Hit")
-    search_preview = results[0]
-    st.json(search_preview)
+    # # Display the first raw result
+    # st.subheader("Search Output Preview of First Hit")
+    # search_preview = results[0]
+    # st.json(search_preview)
 
     # Convert the search content into a dataframe
     results_df = cf.convert_search_results_to_dataframe(
@@ -201,14 +201,6 @@ if search_type == "Default analysis":
     # Build a paginated html-styled table
     # This is how the function should be called, otherwise it won't work
     cf.convert_df_to_html_table(results_df)
-
-    # Extract column names into a list
-    st.subheader("List of the categories in the database")
-
-    # Produce a list of variables within the database
-    category_list = cf.extract_search_categories(
-        dataframe=results_df)
-    category_list
 
     # # Display  above section on different tabs
     # # Below NOT working
@@ -421,22 +413,29 @@ if search_type == "Default analysis":
         dataframe=results_df_redux
     )
 
-    # Below NOT working
-    # nan_table = functions.create_missing_data_table(
+    # # Below NOT working
+    # nan_table = cf.create_missing_data_table(
     #     dataframe=results_df_redux
     # )
     # nan_table  # bugs with missing data table content
 
+    # Extract column names into a list
+    category_list = cf.extract_search_categories(
+        dataframe=results_df)
+    # Build a paginated html-styled table
+    cf.convert_df_to_html_table(dataframe=category_list)
+
     # Display table and matrix of missing data next to each other
     left_column, right_column = st.columns(2)
     with left_column:
-        st.subheader("Table of missing values in each category")
-        st.write("\n")
-        st.write("\n")
-        nan_table
+        st.subheader("List of the categories in the database")
+        cf.convert_df_to_html_table(dataframe=category_list)
     with right_column:
-        st.subheader("Summary of Missing Data")
-        st.pyplot(missing_data_matrix.figure, key=2)
+        st.subheader("Table of missing values in each category")
+        nan_table
+
+    st.subheader("Summary of Missing Data")
+    st.pyplot(missing_data_matrix.figure, key=2)
 
     st.subheader("Table of job offers")
     # AgGrid(results_df_redux)  # NOT working
