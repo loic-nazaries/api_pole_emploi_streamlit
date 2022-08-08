@@ -1,55 +1,56 @@
-"""API of Pole Emploi
-    Specifically, an API to consult available job offers.
+"""API of Pole Emploi.
 
-    In this version, the method '.json_normalize()' was used to convert the
-    search results to a dataframe instead of the Pandas function '.DataFrame()'
-    This allows to process more easily the categories with multiple
-    subcategories.
-    Then, the code is refactored to delete the now outdated functions used to
-    extract content, i.e. the flattened categories.
+Specifically, an API to consult available job offers.
 
-    Also, the analytical functions were moved to the 'functions.py' file.
-    They are now called via 'import custom_functions as cf'.
+In this version, the method '.json_normalize()' was used to convert the
+search results to a dataframe instead of the Pandas function '.DataFrame()'
+This allows to process more easily the categories with multiple
+subcategories.
+Then, the code is refactored to delete the now outdated functions used to
+extract content, i.e. the flattened categories.
 
-    Added a new botton to clear the categories loaded by default in the
-    analysis by keywords and categories.
+Also, the analytical functions were moved to the 'functions.py' file.
+They are now called via 'import custom_functions as cf'.
 
-    Added a function to convert dataframe content into html-styled tables.
-    Created a function to save generated dataframes
+Added a new button to clear the categories loaded by default in the
+analysis by keywords and categories.
 
-    TODO split the function 'def extract_search_content()'
-            into THREE different functions
-    TODO merge the custom search types into one ?
-    TODO better describe the sections and results
-    TODO rename category name in the category list(s)
-    TODO fix the function 'drop_low_occurrence_categories'
-    TODO avoid hard-coding the categories (not elegant + prone to bugs)
-    TODO IMPORTANT !!
-            fix the issue that top 150 hits is the limit for  search output
-    TODO select a category and add a filter for numerical &
-            non-numerical filters (using sliders and number inputs)
-    TODO modify exception/error in date range to print out following message:
-            st.error(
-                '''If an error message appears below, it is likely that
-                the start and end dates are the same.\n
-                Please choose a range of at least ONE day.
-                '''
-            )
-    TODO write a snippet for subsetting filtered data (see 'lambda' functions)
-    TODO why is 'client.referentiel("metiers")' not working ?!
-    TODO format numbers with a space between thousands
-            => "{number:,}".replace(",", " ") is not working...
-    TODO in basic search (or sidebar ?), add a column next to
-            'List of Categories' containing a definition of the categories;
-            e.g. scroll down list
-    TODO the default minimum date cannot be set
-    TODO change the x-axis label in barplots (experience, qualification)
-    TODO modify barplot layout to have definition of acronyms on right
-            use st.columns() with 2/3-1/3 layout
-    TODO correct column names for flattened
-            'competences', 'formations' and 'qualitesPro'
-    TODO set up email address or web client to report a bug
-    TODO deploy app to Heroku or Streamlit Community + try Voila
+Added a function to convert dataframe content into html-styled tables.
+Created a function to save generated dataframes
+
+TODO split the function 'def extract_search_content()'
+        into THREE different functions
+TODO merge the custom search types into one ?
+TODO better describe the sections and results
+TODO rename category name in the category list(s)
+TODO fix the function 'drop_low_occurrence_categories'
+TODO avoid hard-coding the categories (not elegant + prone to bugs)
+TODO IMPORTANT !!
+        fix the issue that top 150 hits is the limit for  search output
+TODO select a category and add a filter for numerical &
+        non-numerical filters (using sliders and number inputs)
+TODO modify exception/error in date range to print out following message:
+        st.error(
+            '''If an error message appears below, it is likely that
+            the start and end dates are the same.\n
+            Please choose a range of at least ONE day.
+            '''
+        )
+TODO write a snippet for subsetting filtered data (see 'lambda' functions)
+TODO why is 'client.referentiel('metiers')' not working ?!
+TODO format numbers with a space between thousands
+        => '{number:,}'.replace(',', ' ') is not working...
+TODO in basic search (or sidebar ?), add a column next to
+        'List of Categories' containing a definition of the categories;
+        e.g. scroll down list
+TODO the default minimum date cannot be set
+TODO change the x-axis label in barplots (experience, qualification)
+TODO modify barplot layout to have definition of acronyms on right
+        use st.columns() with 2/3-1/3 layout
+TODO correct column names for flattened
+        'competences', 'formations' and 'qualitesPro'
+TODO set up email address or web client to report a bug
+TODO deploy app to Heroku or Streamlit Community + try Voila
 """
 
 from datetime import date

@@ -1,4 +1,4 @@
-"""Functions used for extracting data from Pole Emploi API
+"""Functions used for extracting data from Pole Emploi API.
 
 TODO split the function 'def extract_search_content()'
 into THREE different functions
@@ -20,12 +20,12 @@ def start_search(api_client=None, params: dict = None) -> dict:
     # fix type hints for the content of the dict
     """Search the client's API.
 
-        Args:
-            params (dict, optional): _description_. Defaults to None.
+    Args:
+        params (dict, optional): _description_. Defaults to None.
 
-        Returns:
-            dict: _description_
-        """
+    Returns:
+        dict: _description_
+    """
     basic_search = api_client.search(params)
     return basic_search
 
@@ -34,22 +34,23 @@ def start_search(api_client=None, params: dict = None) -> dict:
 def extract_search_content(search_session: dict) -> list[int]:
     # fix type hints for the content of each dict
     """Prepare the search output from a basic search.
-        The basic search corresponds to two lists and one dictionary, namely:
-        - the `resultats`, which contains all the available data
-        - the `filtresPossibles`, which is composed of 4 `filters` ('themes')
-            -
-            -
-            -
-            -
-        - the `Content-Range`, which indicates the number of hits from  search
 
-        Args:
-            basic_search (dict): _description_
+    The basic search corresponds to two lists and one dictionary, namely:
+    - the `resultats`, which contains all the available data
+    - the `filtresPossibles`, which is composed of 4 `filters` ('themes')
+        -
+        -
+        -
+        -
+    - the `Content-Range`, which indicates the number of hits from  search
 
-        Returns:
-            list: _description_
-            dict:
-        """
+    Args:
+        basic_search (dict): _description_
+
+    Returns:
+        list: _description_
+        dict:
+    """
     results = search_session["resultats"]
     filters = search_session["filtresPossibles"]
     content_range = search_session["Content-Range"]
@@ -137,7 +138,8 @@ def extract_linked_categories(
     category_to_extract: str,
     new_fields: list[str]
 ) -> pd.DataFrame:
-    """Extraction of columns with multiple/mixed names.
+    """Extract of columns with multiple/mixed names.
+
     Also, drop the source category from the dataframe as it is now redundant.
 
     Args:
@@ -245,10 +247,13 @@ def merge_dataframes(
 
 # @st.cache
 def create_missing_data_table(dataframe: pd.DataFrame) -> pd.DataFrame:
-    """Display percentage of missing data in a table.
+    """_summary_
 
     Args:
         dataframe (pd.DataFrame): _description_
+
+    Returns:
+        pd.DataFrame: _description_
     """
     nan_table = dataframe.stb.missing(clip_0=False)
     return nan_table
@@ -310,7 +315,7 @@ def filter_categories(
 
 def create_barplot(data: pd.DataFrame) -> object:
     # fix type hints for the content of the 'object'
-    """Plot 'barplots' for each category filter
+    """Plot 'barplots' for each category filter.
 
     Args:
         variable (pd.DataFrame): _description_
@@ -338,7 +343,7 @@ def create_barplot(data: pd.DataFrame) -> object:
 
 
 def convert_to_datetime_format(date_var: str) -> object:
-    """Convert date/time to 'datetime' format
+    """Convert date/time to 'datetime' format.
 
     Args:
         date (str): _description_
@@ -353,7 +358,7 @@ def convert_to_datetime_format(date_var: str) -> object:
 
 
 # def combine_date_to_time(date_stamp: str, time_stamp: str) -> object:
-#     """Merge date and time
+#     """Merge date and time.
 
 #     Args:
 #         date (str): _description_
@@ -368,6 +373,15 @@ def convert_to_datetime_format(date_var: str) -> object:
 
 # @st.cache(suppress_st_warning=True)
 def save_output_file(dataframe: pd.DataFrame, file_name: str) -> object:
+    """_summary_
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        file_name (str): _description_
+
+    Returns:
+        object: _description_
+    """
     save_output = st.download_button(
         label="Save results",
         data=dataframe.to_csv().encode("utf-8"),
@@ -400,6 +414,8 @@ def save_output_file(dataframe: pd.DataFrame, file_name: str) -> object:
 
 
 def main():
+    """_summary_
+    """
     start_search()
     extract_search_content()
     display_max_content()
