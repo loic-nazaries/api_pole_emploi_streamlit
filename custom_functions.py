@@ -15,7 +15,7 @@ from datetime import date  # delete ?
 import datetime
 
 
-# @st.cache
+@st.cache
 def start_search(api_client=None, params: dict = None) -> dict:
     # fix type hints for the content of the dict
     """Search the client's API.
@@ -30,7 +30,7 @@ def start_search(api_client=None, params: dict = None) -> dict:
     return basic_search
 
 
-# @st.cache
+@st.cache
 def extract_search_content(search_session: dict) -> list[int]:
     # fix type hints for the content of each dict
     """Prepare the search output from a basic search.
@@ -85,7 +85,11 @@ def convert_search_results_to_dataframe(
     return dataframe
 
 
-def convert_df_to_html_table(dataframe: pd.DataFrame) -> pd.DataFrame:
+# @st.cache(allow_output_mutation=True)
+def convert_df_to_html_table(
+    dataframe: pd.DataFrame,
+    use_checkbox: bool = True
+) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -95,8 +99,9 @@ def convert_df_to_html_table(dataframe: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: _description_
     """
     gridbuilder = GridOptionsBuilder.from_dataframe(dataframe)
-    gridbuilder.configure_pagination()
+    gridbuilder.configure_pagination(paginationPageSize=20)  # NOT working
     gridbuilder.configure_side_bar()
+    gridbuilder.configure_selection(use_checkbox)
     gridbuilder.configure_default_column(
         groupable=True,
         value=True,
@@ -150,7 +155,7 @@ def extract_linked_categories(
     return dataframe
 
 
-# @st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True)
 def flatten_category(
     dataframe: pd.DataFrame,
     category: str
@@ -186,7 +191,6 @@ def rename_columns_auto(dataframe: pd.DataFrame, column_name: str) -> list:
     return dataframe
 
 
-# @st.cache
 def rename_category(
     dataframe: pd.DataFrame,
     columns: dict({str: str}),
@@ -362,7 +366,40 @@ def convert_to_datetime_format(date_var: str) -> object:
 #     return date_time_combo
 
 
-if __name__ == "__main__":
+# @st.cache(suppress_st_warning=True)
+def save_output_file(dataframe: pd.DataFrame, file_name: str) -> object:
+    save_output = st.download_button(
+        label="Save results",
+        data=dataframe.to_csv().encode("utf-8"),
+        file_name=file_name,
+        mime="text/csv",
+        help="The file will be saved in your default directory",
+    )
+    return save_output
+
+
+# if __name__ == "__main__":
+#     start_search()
+#     extract_search_content()
+#     display_max_content()
+#     convert_search_results_to_dataframe()
+#     convert_df_to_html_table()
+#     extract_search_categories()
+#     extract_linked_categories()
+#     rename_category()
+#     flatten_category()
+#     rename_columns_auto()
+#     create_missing_data_table()
+#     drop_categories()
+#     create_missing_data_matrix()
+#     filter_categories()
+#     create_barplot()
+#     convert_to_datetime_format()
+#     # combine_date_to_time()
+#     save_output_file
+
+
+def main():
     start_search()
     extract_search_content()
     display_max_content()
@@ -380,3 +417,8 @@ if __name__ == "__main__":
     create_barplot()
     convert_to_datetime_format()
     # combine_date_to_time()
+    save_output_file()
+
+
+if __name__ == "__main__":
+    main()

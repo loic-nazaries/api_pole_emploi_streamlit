@@ -9,40 +9,45 @@
     extract content, i.e. the flattened categories.
 
     Also, the analytical functions were moved to the 'functions.py' file.
-    They are now called via 'import custom_functions'.
+    They are now called via 'import custom_functions as cf'.
 
     Added a new botton to clear the categories loaded by default in the
     analysis by keywords and categories.
 
     Added a function to convert dataframe content into html-styled tables.
+    Created a function to save generated dataframes
 
     TODO split the function 'def extract_search_content()'
-                into THREE different functions
+            into THREE different functions
     TODO merge the custom search types into one ?
     TODO better describe the sections and results
+    TODO rename category name in the category list(s)
     TODO fix the function 'drop_low_occurrence_categories'
     TODO avoid hard-coding the categories (not elegant + prone to bugs)
     TODO IMPORTANT !!
-                fix the issue that top 150 hits is the limit for  search output
+            fix the issue that top 150 hits is the limit for  search output
     TODO select a category and add a filter for numerical &
-                non-numerical filters (using sliders and number inputs)
+            non-numerical filters (using sliders and number inputs)
     TODO modify exception/error in date range to print out following message:
-                st.error(
-                    '''If an error message appears below, it is likely that
-                    the start and end dates are the same.\n
-                    Please choose a range of at least ONE day.
-                    '''
-                )
+            st.error(
+                '''If an error message appears below, it is likely that
+                the start and end dates are the same.\n
+                Please choose a range of at least ONE day.
+                '''
+            )
     TODO write a snippet for subsetting filtered data (see 'lambda' functions)
-    TODO why is 'client.referentiel("metiers")' not working?!
+    TODO why is 'client.referentiel("metiers")' not working ?!
     TODO format numbers with a space between thousands
-                => "{number:,}".replace(",", " ") is not working...
+            => "{number:,}".replace(",", " ") is not working...
     TODO in basic search (or sidebar ?), add a column next to
-                'List of Categories' containing a definition of the categories;
-                e.g. scroll down list
+            'List of Categories' containing a definition of the categories;
+            e.g. scroll down list
     TODO the default minimum date cannot be set
-    TODO correct column names for flattened 'competences' and 'qualitesPro'
-    TODO add streamlit pandas-profiling (see Streamlit website)
+    TODO change the x-axis label in barplots (experience, qualification)
+    TODO modify barplot layout to have definition of acronyms on right
+            use st.columns() with 2/3-1/3 layout
+    TODO correct column names for flattened
+            'competences', 'formations' and 'qualitesPro'
     TODO set up email address or web client to report a bug
     TODO deploy app to Heroku or Streamlit Community + try Voila
 """
@@ -118,7 +123,7 @@ elif not user_password:
 st.sidebar.success("You have successfully logged in.")
 
 
-# Define API client
+# Call API client manually
 st.subheader("Enter your API client credentials")
 
 left_column, right_column = st.columns(2)
@@ -128,20 +133,22 @@ with left_column:
 with right_column:
     client_secret = st.text_input(label="Password", key=2)
 
-# Add a clickable log-in action ?
-connect_api = st.button(label="Connect to API")
-
-# Use de token details from the online account.
-# Use client ID and secret using .env file
+# Call API client using the token details
+# (client ID and secret from the .env file)
 client = Api(
     client_id=config("API_PE_CLIENT", default=""),
     client_secret=config("API_PE_SECRET", default=""),
 )
 
+# Add a clickable log-in action ?
+connect_api = st.button(label="Connect to API")
+
+st.caption("Credentials not activated for now")
+
 # Add a spinner when logging in
 if connect_api:
     with st.spinner(text="Connecting..."):
-        time.sleep(2)
+        time.sleep(1)
     st.success("You can now access the API of Pole Emploi.")
 
 
@@ -188,14 +195,13 @@ if search_type == "Default analysis":
     # # Display the first raw result
     # st.subheader("Search Output Preview of First Hit")
     # search_preview = results[0]
-    # st.json(search_preview)
+    # search_preview
 
     # Convert the search content into a dataframe
     results_df = cf.convert_search_results_to_dataframe(
         search_results=results
     )
 
-    # Display the initial table of job offers
     st.subheader("Initial table of job offers")
 
     # Build a paginated html-styled table
@@ -279,6 +285,15 @@ if search_type == "Default analysis":
     )
     # Keep top 3 competences
     flattened_competences = flattened_competences.iloc[:, 0:3]
+    # Below NOT working
+    flattened_competences = cf.rename_category(
+        dataframe=flattened_competences,
+        columns={
+            "('competences 0',)": "competences_0",
+            "('competences 1',)": "competences_1",
+            "('competences 2',)": "competences_2",
+        },
+    )
 
     # Variable 'permis'  # to be (re)done
     # st.write("permis")
@@ -300,6 +315,14 @@ if search_type == "Default analysis":
         dataframe=flattened_formations,
         column_name="formations"
     )
+    # Below NOT working
+    flattened_formations = cf.rename_category(
+        dataframe=flattened_formations,
+        columns={
+            "('formations 0',)": "formations_0",
+            "('formations 1',)": "formations_1",
+        },
+    )
 
     # Concatenate flattened categories
     # Note: the 'id' column was added to apply the '.merge()' function later
@@ -316,6 +339,7 @@ if search_type == "Default analysis":
     )
 
     # Merge initial 'results_df' with flattened categories
+    # Use a custom function
     # Below NOT working
     results_df_merged = cf.merge_dataframes(
         results_df, flattened_categories, on="id"
@@ -330,6 +354,7 @@ if search_type == "Default analysis":
 
     # Display percentage of missing data in a table
     nan_table = cf.create_missing_data_table(
+        # dataframe=results_df_merged,  # NOT working
         dataframe=results_df
     )
     # nan_table
@@ -382,11 +407,11 @@ if search_type == "Default analysis":
         # "('formations 0',)",
         # "('formations 1',)",
         # "contact.commentaire",
-        "salaire.complement2",
+        # "salaire.complement2",
         "contact.telephone",
         # "experienceCommentaire",
-        "contact.coordonnees3",
-        "contact.coordonnees2",
+        # "contact.coordonnees3",
+        # "contact.coordonnees2",
         # "langues",
         # "('langues 0',)",
         # "('langues 1',)",
@@ -415,48 +440,47 @@ if search_type == "Default analysis":
 
     # # Below NOT working
     # nan_table = cf.create_missing_data_table(
-    #     dataframe=results_df_redux
+    #     dataframe=results_df_redux  # same issue as first 'nan_table' object
     # )
-    # nan_table  # bugs with missing data table content
+    # nan_table
 
-    # Extract column names into a list
+    # Extract column names into a dataframe
     category_list = cf.extract_search_categories(
-        dataframe=results_df)
-    # Build a paginated html-styled table
-    cf.convert_df_to_html_table(dataframe=category_list)
+        dataframe=results_df_redux)
 
     # Display table and matrix of missing data next to each other
     left_column, right_column = st.columns(2)
     with left_column:
+        # Build a paginated html-styled table
         st.subheader("List of the categories in the database")
-        cf.convert_df_to_html_table(dataframe=category_list)
+        cf.convert_df_to_html_table(
+            dataframe=category_list,
+            use_checkbox=False,
+        )
     with right_column:
         st.subheader("Table of missing values in each category")
         nan_table
 
     st.subheader("Summary of Missing Data")
-    st.pyplot(missing_data_matrix.figure, key=2)
+    st.pyplot(missing_data_matrix.figure)
 
     st.subheader("Table of job offers")
-    # AgGrid(results_df_redux)  # NOT working
     results_df_redux
+    # AgGrid(results_df_redux)  # NOT working
+    # cf.convert_df_to_html_table(results_df_redux)  # NOT working
 
     # The total number must be fixed with regards to total number of pages,
     # not the first 150 entries as it is now
     st.write(f"Total number of job offers: {len(results_df_redux)}")
 
     # Save the search output
-    save_output = st.download_button(
-        label="Save results",
-        data=results_df_redux.to_csv().encode("utf-8"),
-        file_name="table_job_offer.csv",
-        mime="text/csv",
-        help="The file will be saved in your default directory",
-        key=1,
+    save_output = cf.save_output_file(
+        dataframe=results_df_redux,
+        file_name="table_job_offer.csv"
     )
     if save_output:
         with st.spinner(text="Saving..."):
-            time.sleep(2)
+            time.sleep(1)
         st.success("File saved.")
 
     st.markdown("---")
@@ -468,7 +492,10 @@ if search_type == "Default analysis":
     st.subheader("Number of Hits for Each Job Offer Filter")
 
     filters_df = filters_to_df(filters)
-    AgGrid(filters_df)
+    cf.convert_df_to_html_table(
+        dataframe=filters_df,
+        use_checkbox=False,
+    )
 
     # Get the number of hits from the search
     left_column, right_column = st.columns(2)
@@ -534,8 +561,6 @@ if search_type == "Default analysis":
     for filter_var in filters_list:
         filters_barplot = cf.create_barplot(filter_var)
         st.altair_chart(filters_barplot, use_container_width=True)
-
-st.markdown("---")
 
 # --------------------------------------------------------------------------------------------
 
@@ -617,7 +642,6 @@ if search_type == "Search based on dates and keywords":
     )
 
     filters_df = filters_to_df(filters)
-    # filters_df = filters_df.columns.values[0] = "categories"  # NOT working
     AgGrid(filters_df)
 
     # # Plot the filters output  # NOT working
@@ -625,19 +649,27 @@ if search_type == "Search based on dates and keywords":
     # g = g.map(data=sns.barplot, row="valeur_possible", col="nb_resultats")
 
     # Save the search output
-    st.download_button(
-        label="Save results",
-        data=filters_df.to_csv().encode("utf-8"),
-        file_name="filter_output.csv",
-        mime="text/csv",
-        help="The file will be saved in your default directory",
-        key=2,
+    save_output = cf.save_output_file(
+        dataframe=filters_df,
+        file_name="filter_output.csv"
     )
+    if save_output:
+        # Below NOT working
+        with st.spinner(text="Saving..."):
+            time.sleep()
+        st.success("File saved.")
 
 # -------------------------------------------------------------------------------------------
 
 elif search_type == "Search based on values in categories":
     st.subheader("Search based on values in categories")
+
+    # # Below NOT working
+    # # NameError: name 'results_df_redux' is not defined
+    # category_list = cf.extract_search_categories(
+    #     dataframe=results_df_redux
+    # )
+    # category_list
 
     # IMPORTANT: I could not worked out yet how to isolate the column names,
     # hence they were hard-coded below
@@ -687,11 +719,52 @@ elif search_type == "Search based on values in categories":
         "experienceCommentaire",
     ]
 
-    # # Below NOT working
-    # category_list = cf.extract_search_categories(
-    #     dataframe=results_df_redux
-    # )
-    # category_list
+    # Rename items in the list
+    dict_category_names = {
+        # "id":"id",
+        # "intitule": "intitule",
+        # # "description": "description",
+        # "dateCreation":,
+        # "dateActualisation":,
+        # "lieuTravail":,
+        # "departement":,
+        # "ville":,
+        # "romeCode":,
+        # "romeLibelle":,
+        "appellationlibelle": "romeAppellation",
+        # # "entreprise":,
+        # "nomEntreprise":,
+        # "descriptionEntreprise":,
+        # "typeContrat":,
+        # "typeContratLibelle":,
+        # "natureContrat":,
+        # "experienceExige":,
+        # "experienceLibelle":,
+        # "competences":,
+        # "salaire":,
+        # "dureeTravailLibelle",
+        # "dureeTravailLibelleConverti",
+        # "alternance":,
+        # # "contact":,
+        # "nomContact":,
+        # "nombrePostes":,
+        "accessibleTH": "accessibleTauxHoraire",
+        # "qualificationCode":,
+        # "qualificationLibelle":,
+        # "secteurActivite":,
+        # "secteurActiviteLibelle":,
+        # "qualitesProfessionnelles":,
+        "origineOffre": "publicationOffre",
+        # "offresManqueCandidats":,
+        # "langues":,
+        # "formations":,
+        "deplacementCode": "deplacementPossibleCode",
+        "deplacementLibelle": "deplacementPossibleLibelle",
+        # "agence":,
+        # "permis":,
+        # "experienceCommentaire":,
+    }
+    category_list = [dict_category_names.get(n, n) for n in category_list]
 
     # Sort list of categories and change column name
     category_list.sort(reverse=False)
@@ -771,17 +844,17 @@ elif search_type == "Search based on values in categories":
     st.write(f"Total number of job offers: {content_range['max_results']}")
 
     results_df_from_categories = pd.DataFrame(results)
-    AgGrid(results_df_from_categories)
+    cf.convert_df_to_html_table(dataframe=results_df_from_categories)
 
     # Save the search output
-    st.download_button(
-        label="Save results",
-        data=results_df_from_categories.to_csv().encode("utf-8"),
-        file_name="search_category_output.csv",
-        mime="text/csv",
-        help="The file will be saved in your default directory",
-        key=3,
+    save_output = cf.save_output_file(
+        dataframe=results_df_from_categories,
+        file_name="search_category_output.csv"
     )
+    if save_output:
+        with st.spinner(text="Saving..."):
+            time.sleep(1)
+        st.success("File saved.")
 
     # Filter data by using the `salaire` for each `entreprise`
     st.subheader("Filter Categories")
@@ -797,24 +870,17 @@ elif search_type == "Search based on values in categories":
     )
 
     # This code snippet should be deleted and/or merged with subsetting snippet
-    # Also, all columns should be flattened out
-    st.write("Job Offers Before Filtering")
+    # all columns should be flattened out
     # Use hard-coded parameters for now
     filtered_results = pd.DataFrame(results)[["id", "entreprise", "salaire"]]
-    AgGrid(filtered_results)
 
     # Custom filters
-    # filtered_results = st.multiselect(
+    # Filter a category based on  a value
+    # filter_category = st.multiselect(
     #     label="Choose filters to apply",
     #     options=category_list
     #     )
-    # AgGrid(filtered_results)
 
-    # Subset the dataframe for `enterprise` name and `salaire` within
-    # `libelle` category; this is hard-coded below, for now
-    st.subheader(
-        "Subset the filtered data to analyse the salary per enterprise"
-    )
     # Select enterprise name from `nom` column and salary from `libelle` column
     salary_by_enterprise = filtered_results.agg(
         dict(
@@ -829,41 +895,40 @@ elif search_type == "Search based on values in categories":
     id_offre = filtered_results["id"].squeeze()
 
     # Re-insert the 'id_offre' series to the 'salary_by_enterprise' dataframe
-    salary_by_enterprise.insert(0, "id_offre", id_offre)
-    AgGrid(salary_by_enterprise)
+    salary_by_enterprise.insert(0, "id", id_offre)
 
     # Drop the rows with missing data
-    salary_by_enterprise = salary_by_enterprise.dropna()
-    # Get the final number of hits from the search
-    st.write(
-        f"""
-        Final number of job offers after removing missing data:
-            {len(salary_by_enterprise)}
-        """
-    )
-    AgGrid(salary_by_enterprise)
+    salary_by_enterprise_dropna = salary_by_enterprise.dropna()
 
-    # # Convert the final dataframe to a '.csv' format string
-    # # NOT working but works well with the next code block
-    # salary_by_enterprise_output = salary_by_enterprise.to_csv(
-    #     sep=",",
-    #     na_rep="",
-    #     index=False,
-    # ).encode("utf-8"),
+    # Below needs refactoring !
+    # Tick a box to remove missing data from the dataframe
+    remove_missing_data = st.checkbox(label="Remove missing data", value=False)
+    if remove_missing_data:
+        st.write(
+            f"""
+            Final number of job offers after removing missing data:
+                {len(salary_by_enterprise_dropna)}
+            """
+        )
+        cf.convert_df_to_html_table(dataframe=salary_by_enterprise_dropna)
+    else:
+        st.write(
+            f"""
+            Final number of job offers after removing missing data:
+                {len(salary_by_enterprise)}
+            """
+        )
+        cf.convert_df_to_html_table(dataframe=salary_by_enterprise)
 
     # Save the search output
-    st.download_button(
-        label="Save results",
-        data=salary_by_enterprise.to_csv(
-            sep=",",
-            na_rep="",
-            index=False,
-        ).encode("utf-8"),
-        file_name="salary_by_enterprise.csv",
-        mime="text/csv",
-        help="The file will be saved in your default directory",
-        key=4,
+    save_output = cf.save_output_file(
+        dataframe=salary_by_enterprise,
+        file_name="salary_by_enterprise.csv"
     )
+    if save_output:
+        with st.spinner(text="Saving..."):
+            time.sleep(1)
+        st.success("File saved.")
 
 
 # # NOT working
