@@ -91,7 +91,7 @@ def convert_df_to_html_table(
     dataframe: pd.DataFrame,
     use_checkbox: bool = True
 ) -> pd.DataFrame:
-    """_summary_
+    """_summary_.
 
     Args:
         dataframe (pd.DataFrame): _description_
@@ -247,7 +247,7 @@ def merge_dataframes(
 
 # @st.cache
 def create_missing_data_table(dataframe: pd.DataFrame) -> pd.DataFrame:
-    """_summary_
+    """_summary_.
 
     Args:
         dataframe (pd.DataFrame): _description_
@@ -373,7 +373,7 @@ def convert_to_datetime_format(date_var: str) -> object:
 
 # @st.cache(suppress_st_warning=True)
 def save_output_file(dataframe: pd.DataFrame, file_name: str) -> object:
-    """_summary_
+    """_summary_.
 
     Args:
         dataframe (pd.DataFrame): _description_
@@ -414,8 +414,7 @@ def save_output_file(dataframe: pd.DataFrame, file_name: str) -> object:
 
 
 def main():
-    """_summary_
-    """
+    """_summary_."""
     start_search()
     extract_search_content()
     display_max_content()
