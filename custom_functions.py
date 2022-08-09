@@ -15,6 +15,57 @@ from datetime import date  # delete ?
 import datetime
 
 
+def check_password() -> bool:
+    """Return `True` if the user had the correct password."""
+
+    def password_entered():
+        """Check whether a password entered by the user is correct."""
+        if (
+            st.session_state["username"] in st.secrets["passwords"]
+            and st.session_state["password"]
+            == st.secrets["passwords"][st.session_state["username"]]
+        ):
+            st.session_state["password_correct"] = True
+            # Don't store username and password
+            del st.session_state["username"]
+            del st.session_state["password"]
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # First run, show inputs for username + password.
+        st.sidebar.text_input(
+            label="Enter your username",
+            on_change=password_entered,
+            key="username"
+        )
+        st.sidebar.text_input(
+            label="Enter your password",
+            type="password",
+            on_change=password_entered,
+            key="password"
+        )
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password not correct, show input + error.
+        st.sidebar.text_input(
+            label="Enter your username",
+            on_change=password_entered,
+            key="username"
+        )
+        st.sidebar.text_input(
+            label="Enter your password",
+            type="password",
+            on_change=password_entered,
+            key="password"
+        )
+        st.sidebar.error("😕 User not known or password incorrect")
+        return False
+    else:
+        # Password correct.
+        return True
+
+
 @st.cache
 def start_search(api_client=None, params: dict = None) -> dict:
     # fix type hints for the content of the dict
