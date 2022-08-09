@@ -22,6 +22,7 @@ TODO split the function 'def extract_search_content()'
         into THREE different functions
 TODO merge the custom search types into one ?
 TODO better describe the sections and results
+TODO edit code to change saving location manually
 TODO rename category name in the category list(s)
 TODO fix the function 'drop_low_occurrence_categories'
 TODO avoid hard-coding the categories (not elegant + prone to bugs)
