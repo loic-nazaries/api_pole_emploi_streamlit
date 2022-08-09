@@ -444,6 +444,7 @@ def save_output_file(dataframe: pd.DataFrame, file_name: str) -> object:
 
 
 # if __name__ == "__main__":
+#     check_password()
 #     start_search()
 #     extract_search_content()
 #     display_max_content()
@@ -466,6 +467,7 @@ def save_output_file(dataframe: pd.DataFrame, file_name: str) -> object:
 
 def main():
     """_summary_."""
+    check_password()
     start_search()
     extract_search_content()
     display_max_content()

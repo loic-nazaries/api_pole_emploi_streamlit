@@ -13,17 +13,16 @@ Similarly, the API credentials were moved to the 'secrets.toml' file from the
 
 FIXME Renaming the flattened 'langues', 'formations' and 'competences'
         variables is not working
-TODO Refactor the date calculations using the 'Pendulum' package
 TODO There is possibility to connect to different APIs when needed
         Hence, a 'st.selectbox()' component could be added
 TODO Split the function 'def extract_search_content()'
         into THREE different functions
 TODO Merge the custom search types into one ?
-        And/or, split sections into different files ?
-        Hence, main file will be less complicated (shorter)
+TODO Split app sections/steps into different files ?
+        Hence, main file will be less complicated (and shorter)
 TODO Similarly, remove the top of the page (API image) after logging in
 TODO Remove the object 'You have successfully logged in.' after 2 seconds
-TODO Edit code to change saving location manually
+TODO Edit code to change saving file location manually
 TODO Better describe the sections and results
 FIXME Fix the function 'drop_low_occurrence_categories'
 TODO avoid hard-coding the categories (not elegant + prone to bugs)
@@ -56,9 +55,9 @@ TODO Deploy app to Heroku or Streamlit Community + try Voila
 """
 
 from datetime import date
+from dateutil import relativedelta
 from offres_emploi import Api
 from offres_emploi.utils import dt_to_str_iso, filters_to_df
-from dateutil import relativedelta
 from st_aggrid import AgGrid
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -66,7 +65,6 @@ import seaborn as sns
 import streamlit as st
 import time
 import custom_functions as cf
-import os
 
 # -------------------------------------------------------------------------------------------
 
@@ -109,10 +107,8 @@ st.write(
     """
 )
 
-st.markdown("---")
-
 # Log-in section
-# Check for user's name  password
+# Check for user's name and  password
 if cf.check_password():
     st.sidebar.success("You have successfully logged in.")
     # then, all code below should be indented
@@ -178,13 +174,21 @@ if cf.check_password():
         # This is how the function should be called, otherwise it won't work
         cf.convert_df_to_html_table(results_df)
 
-        # # Display  above section on different tabs
+        # Get the list of categories within the database
+        category_list = cf.extract_search_categories(
+            dataframe=results_df
+        )
+        # # Create a dictionary of the categories
+        # category_dictionary =
+
+        # # Display  above tasks on different tabs
         # # (default position would undeveloped - use 'st.expander' component)
-        # # Below NOT working
+        # # Below NOT working and get error:
+        # # AttributeError: module 'streamlit' has no attribute 'tabs'
         # tab1, tab2, tab3 = st.tabs([
         #     "Job offers",
         #     "List of categories",
-        #     "Definition of category values" # or elsewhere like on sidebar?
+        #     "Definition of category values"  # or elsewhere like on sidebar?
         # ])
         # with tab1:
         #     st.subheader("Initial table of job offers")
@@ -192,6 +196,9 @@ if cf.check_password():
         # with tab2:
         #     st.subheader("List of the categories in the database")
         #     category_list
+        # with tab3:
+        #     st.subheader("Dictionary of Categories (coming soon)")
+        #     # category_dictionary
 
         # Variable 'lieuTravail.libelle'
         # Extract the words separated by a '-'
@@ -418,7 +425,8 @@ if cf.check_password():
 
         # Extract column names into a dataframe
         category_list = cf.extract_search_categories(
-            dataframe=results_df_redux)
+            dataframe=results_df_redux
+        )
 
         # Display table and matrix of missing data next to each other
         left_column, right_column = st.columns(2)
@@ -489,7 +497,7 @@ if cf.check_password():
             st.metric(
                 label="Number of job offers since previous month",
                 value=654321,
-                # value=past_month_offers,
+                # value=past_month_offers,  # 'past_month_offers' to be coded
                 # delta=12345,
                 delta=int(content_max) - 654321,
             )
@@ -553,11 +561,11 @@ if cf.check_password():
         # Set a default date to avoid error message when loading the page
         # as the date menu will ask for 'maxCreationDate ' superior to
         # 'minCreationDate '
-        # Hence 'default_start_date' is set to ONE month prior to today's date
+        # Hence 'default_start_date' is set to SEVEN SAYS prior to today's date
         default_start_date = (
-            date.today() + relativedelta.relativedelta(months=-1)
+            date.today() + relativedelta.relativedelta(days=-7)
         )
-        default_start_date
+        st.write(f"Start Date should be {default_start_date}...")
 
         # 'default_start_date' does NOT work with 'min_value' below
         left_column, right_column = st.columns(2)
@@ -565,30 +573,11 @@ if cf.check_password():
             start_date = st.date_input(
                 label="Pick a Start Date", min_value=default_start_date
             )
+            # start_time = st.time_input(label="Pick a Start Time")
+
+        with right_column:
             end_date = st.date_input(label="Pick an End Date")
-
-        # with right_column:
-        #     start_time = st.time_input(label="Pick a Start Time")
-        #     end_time = st.time_input(label="Pick an End Time")
-
-        start_date = cf.convert_to_datetime_format(start_date)
-        end_date = cf.convert_to_datetime_format(end_date)
-
-        # start_dt = functions.convert_to_datetime_format(start_date)
-        # end_dt = functions.convert_to_datetime_format(end_date)
-
-        # start_datetime = functions.combine_date_to_time(start_dt, start_time)
-        # end_datetime = functions.combine_date_to_time(start_time, end_time)
-
-        # start_dt = datetime.datetime(
-        #     year=start_date.year, month=start_date.month, day=start_date.day
-        # )
-        # start_datetime = datetime.datetime.combine(start_dt, start_time)
-
-        # end_dt = datetime.datetime(
-        #     year=end_date.year, month=end_date.month, day=end_date.day
-        # )
-        # end_datetime = datetime.datetime.combine(end_date, end_time)
+            # end_time = st.time_input(label="Pick an End Time")
 
         # Set-up the search parameters
         key_words = st.text_input(
@@ -601,9 +590,9 @@ if cf.check_password():
             "minCreationDate": dt_to_str_iso(start_date),
             "maxCreationDate": dt_to_str_iso(end_date),
         }
-
         search_date = cf.start_search(
-            api_client=client, params=parameters)
+            api_client=client, params=parameters
+        )
 
         # Prepare filters output
         filters = search_date["filtresPossibles"]
