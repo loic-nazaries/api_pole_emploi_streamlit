@@ -10,7 +10,7 @@ written to perform this task.
 As a consequence to this change, all the code BELOW was shifted by one indent
 
 TODO Move the API credentials into the 'secrets.toml' file
-TODO Renaming the flattened 'langues', 'formations' and 'competences'
+FIXME Renaming the flattened 'langues', 'formations' and 'competences'
         variables is not working
 TODO Refactor the date calculations using the 'Pendulum' package
 TODO There is possibility to connect to different APIs when needed
@@ -18,13 +18,14 @@ TODO There is possibility to connect to different APIs when needed
 TODO Split the function 'def extract_search_content()'
         into THREE different functions
 TODO Merge the custom search types into one ?
+        And/or, split sections into different files ?
+        Hence, main file will be less complicated (shorter)
 TODO Similarly, remove the top of the page (API image) after logging in
 TODO Remove the object 'You have successfully logged in.' after 2 seconds
 TODO Better describe the sections and results
-TODO Rename category name in the category list(s)
-TODO Fix the function 'drop_low_occurrence_categories'
+FIXME Fix the function 'drop_low_occurrence_categories'
 TODO avoid hard-coding the categories (not elegant + prone to bugs)
-TODO IMPORTANT !!
+FIXME IMPORTANT !!
         Fix the issue that top 150 hits is the limit for  search output
 TODO Select a category and add a filter for numerical &
         non-numerical filters (using sliders and number inputs)
@@ -36,16 +37,16 @@ TODO Modify exception/error in date range to print out following message:
             '''
         )
 TODO Write a snippet for subsetting filtered data (see 'lambda' functions)
-TODO Why is 'client.referentiel('metiers')' not working ?!
+FIXME Why is 'client.referentiel('metiers')' not working ?!
 TODO Format numbers with a space between thousands
         => '{number:,}'.replace(',', ' ') is not working...
 TODO In basic search (or sidebar ?), add a column next to
         'List of Categories' containing a definition of the categories;
         e.g. scroll down list ?
-TODO The default minimum date cannot be set
+TODO And/or modify barplot layout to have definition of acronyms on right
+            use st.columns() with 2/3-1/3 layout
+FIXME The default minimum date cannot be set
 TODO Change the x-axis label in barplots (experience, qualification)
-TODO Modify barplot layout to have definition of acronyms on right
-        use st.columns() with 2/3-1/3 layout
 TODO Correct column names for flattened
         'competences', 'formations' and 'qualitesPro'
 TODO Set up email address or web client to report a bug
