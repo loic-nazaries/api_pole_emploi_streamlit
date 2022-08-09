@@ -6,10 +6,11 @@ In this version, the username/secrets method input was changed.
 Instead, secrets were created (see '.toml' file in '.streamlit' folder)
 for connecting to the Web app. A new function 'def check_password()' was
 written to perform this task.
+As a consequence to this change, all the code BELOW was shifted by one indent.
 
-As a consequence to this change, all the code BELOW was shifted by one indent
+Similarly, the API credentials were moved to the 'secrets.toml' file from the
+'.env' file. As a consequence, the 'decouple' library in not needed any more.
 
-TODO Move the API credentials into the 'secrets.toml' file
 FIXME Renaming the flattened 'langues', 'formations' and 'competences'
         variables is not working
 TODO Refactor the date calculations using the 'Pendulum' package
@@ -22,6 +23,7 @@ TODO Merge the custom search types into one ?
         Hence, main file will be less complicated (shorter)
 TODO Similarly, remove the top of the page (API image) after logging in
 TODO Remove the object 'You have successfully logged in.' after 2 seconds
+TODO Edit code to change saving location manually
 TODO Better describe the sections and results
 FIXME Fix the function 'drop_low_occurrence_categories'
 TODO avoid hard-coding the categories (not elegant + prone to bugs)
@@ -54,7 +56,6 @@ TODO Deploy app to Heroku or Streamlit Community + try Voila
 """
 
 from datetime import date
-from decouple import config
 from offres_emploi import Api
 from offres_emploi.utils import dt_to_str_iso, filters_to_df
 from dateutil import relativedelta
@@ -134,10 +135,10 @@ if cf.check_password():
     )
 
     # Call API client using the token details provided
-    # (client ID and secret from the .env file)
+    # (client ID and secret from the secrets.toml file)
     client = Api(
-        client_id=config("API_PE_CLIENT", default=""),
-        client_secret=config("API_PE_SECRET", default=""),
+        client_id=st.secrets["passwords"]["API_PE_CLIENT"],
+        client_secret=st.secrets["passwords"]["API_PE_SECRET"],
     )
 
     if search_type == "Default analysis":
