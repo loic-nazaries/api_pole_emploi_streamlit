@@ -9,41 +9,47 @@ written to perform this task.
 
 As a consequence to this change, all the code BELOW was shifted by one indent
 
-TODO split the function 'def extract_search_content()'
+TODO Move the API credentials into the 'secrets.toml' file
+TODO Renaming the flattened 'langues', 'formations' and 'competences'
+        variables is not working
+TODO Refactor the date calculations using the 'Pendulum' package
+TODO There is possibility to connect to different APIs when needed
+        Hence, a 'st.selectbox()' component could be added
+TODO Split the function 'def extract_search_content()'
         into THREE different functions
-TODO merge the custom search types into one ?
-TODO remove the object 'You have successfully logged in.' after 2 seconds
-TODO similarly, remove the top of the page (API image) after logging in
-TODO better describe the sections and results
-TODO rename category name in the category list(s)
-TODO fix the function 'drop_low_occurrence_categories'
+TODO Merge the custom search types into one ?
+TODO Similarly, remove the top of the page (API image) after logging in
+TODO Remove the object 'You have successfully logged in.' after 2 seconds
+TODO Better describe the sections and results
+TODO Rename category name in the category list(s)
+TODO Fix the function 'drop_low_occurrence_categories'
 TODO avoid hard-coding the categories (not elegant + prone to bugs)
 TODO IMPORTANT !!
-        fix the issue that top 150 hits is the limit for  search output
-TODO select a category and add a filter for numerical &
+        Fix the issue that top 150 hits is the limit for  search output
+TODO Select a category and add a filter for numerical &
         non-numerical filters (using sliders and number inputs)
-TODO modify exception/error in date range to print out following message:
+TODO Modify exception/error in date range to print out following message:
         st.error(
             '''If an error message appears below, it is likely that
             the start and end dates are the same.
             Please choose a range of at least ONE day.
             '''
         )
-TODO write a snippet for subsetting filtered data (see 'lambda' functions)
-TODO why is 'client.referentiel('metiers')' not working ?!
-TODO format numbers with a space between thousands
+TODO Write a snippet for subsetting filtered data (see 'lambda' functions)
+TODO Why is 'client.referentiel('metiers')' not working ?!
+TODO Format numbers with a space between thousands
         => '{number:,}'.replace(',', ' ') is not working...
-TODO in basic search (or sidebar ?), add a column next to
+TODO In basic search (or sidebar ?), add a column next to
         'List of Categories' containing a definition of the categories;
-        e.g. scroll down list
-TODO the default minimum date cannot be set
-TODO change the x-axis label in barplots (experience, qualification)
-TODO modify barplot layout to have definition of acronyms on right
+        e.g. scroll down list ?
+TODO The default minimum date cannot be set
+TODO Change the x-axis label in barplots (experience, qualification)
+TODO Modify barplot layout to have definition of acronyms on right
         use st.columns() with 2/3-1/3 layout
-TODO correct column names for flattened
+TODO Correct column names for flattened
         'competences', 'formations' and 'qualitesPro'
-TODO set up email address or web client to report a bug
-TODO deploy app to Heroku or Streamlit Community + try Voila
+TODO Set up email address or web client to report a bug
+TODO Deploy app to Heroku or Streamlit Community + try Voila
 """
 
 from datetime import date
@@ -103,7 +109,6 @@ st.write(
 
 st.markdown("---")
 
-
 # Log-in section
 # Check for user's name  password
 if cf.check_password():
@@ -129,7 +134,6 @@ if cf.check_password():
 
     # Call API client using the token details provided
     # (client ID and secret from the .env file)
-    # There is possibility to connect to different APIs when needed
     client = Api(
         client_id=config("API_PE_CLIENT", default=""),
         client_secret=config("API_PE_SECRET", default=""),
@@ -156,7 +160,7 @@ if cf.check_password():
 
         # DATA CLEANING
 
-        # # Display the first raw result
+        # # Display the first raw result (.json file format)
         # st.subheader("Search Output Preview of First Hit")
         # search_preview = results[0]
         # search_preview
@@ -173,6 +177,7 @@ if cf.check_password():
         cf.convert_df_to_html_table(results_df)
 
         # # Display  above section on different tabs
+        # # (default position would undeveloped - use 'st.expander' component)
         # # Below NOT working
         # tab1, tab2, tab3 = st.tabs([
         #     "Job offers",
@@ -325,7 +330,6 @@ if cf.check_password():
 
         # Prepare summary table of missing data based on missing data threshold
         # and/or chosen variables
-
         # # a menu with all categories is displayed, and user 'unticks'
         # # the unwanted values (see next section too)
         # st.multiselect(
@@ -615,19 +619,6 @@ if cf.check_password():
         filters_df = filters_to_df(filters)
         AgGrid(filters_df)
 
-        # # Plot the filters output  # NOT working
-        # g = sns.FacetGrid(
-        #     filters_df,
-        #     col="filtre",
-        #     sharex=False,
-        #     sharey=False
-        # )
-        # g = g.map(
-        #     data=sns.barplot,
-        #     row="valeur_possible",
-        #     col="nb_resultats"
-        # )
-
         # Save the search output
         save_output = cf.save_output_file(
             dataframe=filters_df,
@@ -701,48 +692,11 @@ if cf.check_password():
 
         # Rename items in the list
         dict_category_names = {
-            # "id":"id",
-            # "intitule": "intitule",
-            # # "description": "description",
-            # "dateCreation":,
-            # "dateActualisation":,
-            # "lieuTravail":,
-            # "departement":,
-            # "ville":,
-            # "romeCode":,
-            # "romeLibelle":,
             "appellationlibelle": "romeAppellation",
-            # # "entreprise":,
-            # "nomEntreprise":,
-            # "descriptionEntreprise":,
-            # "typeContrat":,
-            # "typeContratLibelle":,
-            # "natureContrat":,
-            # "experienceExige":,
-            # "experienceLibelle":,
-            # "competences":,
-            # "salaire":,
-            # "dureeTravailLibelle",
-            # "dureeTravailLibelleConverti",
-            # "alternance":,
-            # # "contact":,
-            # "nomContact":,
-            # "nombrePostes":,
             "accessibleTH": "accessibleTauxHoraire",
-            # "qualificationCode":,
-            # "qualificationLibelle":,
-            # "secteurActivite":,
-            # "secteurActiviteLibelle":,
-            # "qualitesProfessionnelles":,
             "origineOffre": "publicationOffre",
-            # "offresManqueCandidats":,
-            # "langues":,
-            # "formations":,
             "deplacementCode": "deplacementPossibleCode",
             "deplacementLibelle": "deplacementPossibleLibelle",
-            # "agence":,
-            # "permis":,
-            # "experienceCommentaire":,
         }
         category_list = [dict_category_names.get(n, n) for n in category_list]
 
