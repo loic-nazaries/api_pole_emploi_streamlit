@@ -37,6 +37,7 @@ TODO Modify exception/error in date range to print out following message:
             Please choose a range of at least ONE day.
             '''
         )
+FIXME Fix code for displaying tabs (try update streamlit library)
 TODO Write a snippet for subsetting filtered data (see 'lambda' functions)
 FIXME Why is 'client.referentiel('metiers')' not working ?!
 TODO Format numbers with a space between thousands
@@ -756,7 +757,8 @@ if cf.check_password():
         }
 
         search_categories = cf.start_search(
-            api_client=client, params=parameters)
+            api_client=client, params=parameters
+        )
 
         # Prepare search results
         results = search_categories["resultats"]
