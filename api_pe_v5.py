@@ -20,6 +20,7 @@ TODO Split the function 'def extract_search_content()'
 TODO Merge the custom search types into one ?
 TODO Split app sections/steps into different files ?
         Hence, main file will be less complicated (and shorter)
+        See new Streamlit functionality for displaying multiple pages
 TODO Similarly, remove the top of the page (API image) after logging in
 TODO Remove the object 'You have successfully logged in.' after 2 seconds
 TODO Edit code to change saving file location manually
@@ -38,6 +39,7 @@ TODO Modify exception/error in date range to print out following message:
             '''
         )
 FIXME Fix code for displaying tabs (try update streamlit library)
+        i.e. 'AttributeError: module 'streamlit' has no attribute 'tabs' '
 TODO Write a snippet for subsetting filtered data (see 'lambda' functions)
 FIXME Why is 'client.referentiel('metiers')' not working ?!
 TODO Format numbers with a space between thousands
@@ -566,7 +568,7 @@ if cf.check_password():
         default_start_date = (
             date.today() + relativedelta.relativedelta(days=-7)
         )
-        st.write(f"Start Date should be {default_start_date}...")
+        st.warning(f"Bug: Default Start Date should be {default_start_date}.")
 
         # 'default_start_date' does NOT work with 'min_value' below
         left_column, right_column = st.columns(2)
