@@ -83,6 +83,22 @@ st.set_page_config(
     },
 )
 
+# Change the default font ?
+st.write(
+    """
+    <style>
+    @import url(
+        'https://fonts.googleapis.com/css2?family:Fascinate'
+    );
+
+    html, body, [class*="css"] {
+        font-family:'Fascinate' cursive;
+    }
+    <style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Other default settings
 # Disable warnings from deprecation
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -90,6 +106,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Display Epsilon logo
 st.sidebar.image("./images/epsilon_logo.png")
+
 
 # App title
 st.title("API de Pole Emploi")
