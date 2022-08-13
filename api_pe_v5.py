@@ -11,19 +11,19 @@ As a consequence to this change, all the code BELOW was shifted by one indent.
 Similarly, the API credentials were moved to the 'secrets.toml' file from the
 '.env' file. As a consequence, the 'decouple' library in not needed any more.
 
+Tabs coded previously are now active (an update was necessary)
+
 FIXME Renaming the flattened 'langues', 'formations' and 'competences'
         variables is not working
-TODO There is possibility to connect to different APIs when needed
-        Hence, a 'st.selectbox()' component could be added
 TODO Split the function 'def extract_search_content()'
         into THREE different functions
 TODO Merge the custom search types into one ?
+        if so, using a date range should not be compulsory
 TODO Split app sections/steps into different files ?
         Hence, main file will be less complicated (and shorter)
         See new Streamlit functionality for displaying multiple pages
-TODO Similarly, remove the top of the page (API image) after logging in
 TODO Remove the object 'You have successfully logged in.' after 2 seconds
-TODO Edit code to change saving file location manually
+TODO Similarly, remove the top of the page (API image) after logging in
 TODO Better describe the sections and results
 FIXME Fix the function 'drop_low_occurrence_categories'
 TODO avoid hard-coding the categories (not elegant + prone to bugs)
@@ -38,11 +38,9 @@ TODO Modify exception/error in date range to print out following message:
             Please choose a range of at least ONE day.
             '''
         )
-FIXME Fix code for displaying tabs (try update streamlit library)
-        i.e. 'AttributeError: module 'streamlit' has no attribute 'tabs' '
 TODO Write a snippet for subsetting filtered data (see 'lambda' functions)
 FIXME Why is 'client.referentiel('metiers')' not working ?!
-TODO Format numbers with a space between thousands
+FIXME Format numbers with a space between thousands
         => '{number:,}'.replace(',', ' ') is not working...
 TODO In basic search (or sidebar ?), add a column next to
         'List of Categories' containing a definition of the categories;
@@ -51,8 +49,6 @@ TODO And/or modify barplot layout to have definition of acronyms on right
             use st.columns() with 2/3-1/3 layout
 FIXME The default minimum date cannot be set
 TODO Change the x-axis label in barplots (experience, qualification)
-TODO Correct column names for flattened
-        'competences', 'formations' and 'qualitesPro'
 TODO Set up email address or web client to report a bug
 TODO Deploy app to Heroku or Streamlit Community + try Voila
 """
@@ -110,30 +106,51 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 # Display Epsilon logo
 st.sidebar.image("./images/epsilon_logo.png")
 
-
 # App title
 st.title("API de Pole Emploi")
 
 # Show Pole Emploi API log-in image
 st.image("./images/api_pe_account.png")
 
-st.header("Recherche d'offres d'emploi avec l'API '**Offres d'emploi v2'**")
-# Add link to API page
-st.write(
-    """
-    Click
-    [here](https:/pole-emploi.io/data/api/offres-emploi)
-    to access the API page.
-    """
-)
+# There is possibility to connect to different APIs when needed
+api_list = [
+    "Pick an API below",
+    "Offres d'emploi v2",
+    "Anotéa",
+    "Pôle emploi Connect",
+]
 
 # Log-in section
 # Check for user's name and  password
 if cf.check_password():
     st.sidebar.success("You have successfully logged in.")
-    # then, all code below should be indented
 
-# -------------------------------------------------------------------------------------------
+    st.sidebar.selectbox(label="Choose an API", options=api_list)
+
+    st.write(
+        """
+        Click
+        [here](https:/pole-emploi.io/data/api/offres-emploi)
+        to access the Pôle emploi API catalog.
+        """
+    )
+
+# # Below does not seem to work, even when adding an indent to the rest of the
+# # code below the 'START DATA ANALYSIS' section
+# if api_list == "Offres d'emploi v2":
+#     st.header(
+#         "Recherche d'offres d'emploi avec l'API '**Offres d'emploi v2'**"
+#     )
+#     # Add link to API page
+#     st.write(
+#         """
+#         Click
+#         [here](https:/pole-emploi.io/data/api/offres-emploi)
+#         to access the API page.
+#         """
+#     )
+
+# ----------------------------------------------------------------------------
 
 # START DATA ANALYSIS
 
@@ -174,7 +191,7 @@ if cf.check_password():
 
         st.write(f"Total number of job offers: {content_max}")
 
-        # -------------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------
 
         # DATA CLEANING
 
@@ -188,37 +205,27 @@ if cf.check_password():
             search_results=results
         )
 
-        st.subheader("Initial table of job offers")
-
-        # Build a paginated html-styled table
-        # This is how the function should be called, otherwise it won't work
-        cf.convert_df_to_html_table(results_df)
-
         # Get the list of categories within the database
         category_list = cf.extract_search_categories(
             dataframe=results_df
         )
+
         # # Create a dictionary of the categories
         # category_dictionary =
 
-        # # Display  above tasks on different tabs
-        # # (default position would undeveloped - use 'st.expander' component)
-        # # Below NOT working and get error:
-        # # AttributeError: module 'streamlit' has no attribute 'tabs'
-        # tab1, tab2, tab3 = st.tabs([
-        #     "Job offers",
-        #     "List of categories",
-        #     "Definition of category values"  # or elsewhere like on sidebar?
-        # ])
-        # with tab1:
-        #     st.subheader("Initial table of job offers")
-        #     cf.convert_df_to_html_table(results_df)
-        # with tab2:
-        #     st.subheader("List of the categories in the database")
-        #     category_list
-        # with tab3:
-        #     st.subheader("Dictionary of Categories (coming soon)")
-        #     # category_dictionary
+        tab1, tab2 = st.tabs([
+            "Job offers",
+            "Definition of category names and values"  # or on sidebar?
+        ])
+        with tab1:
+            st.subheader("Initial table of job offers")
+            # Build a paginated html-styled table
+            # How the function should be called, otherwise it won't work
+            cf.convert_df_to_html_table(results_df, key=2)
+        with tab2:
+            st.subheader("Dictionary of Categories")
+            st.write("Coming Soon!")
+            # category_dictionary
 
         # Variable 'lieuTravail.libelle'
         # Extract the words separated by a '-'
@@ -403,7 +410,7 @@ if cf.check_password():
             "formations",
             # "('formations 0',)",
             # "('formations 1',)",
-            "contact.commentaire",
+            # "contact.commentaire",
             "salaire.complement2",
             "contact.telephone",
             "experienceCommentaire",
@@ -424,7 +431,7 @@ if cf.check_password():
             "contact.nom",
             "contact.urlPostulation",
             "agence.courriel",
-            "complementExercice",
+            # "complementExercice",
         ]
 
         # Drop categories not needed or redundant
@@ -485,7 +492,7 @@ if cf.check_password():
 
         st.markdown("---")
 
-        # --------------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------
 
         # BUILD A METRIC DASHBOARD
 
@@ -503,7 +510,7 @@ if cf.check_password():
             # content_range = basic_search["Content-Range"]
             st.info(
                 f"""
-                Total number of job offers this month\n
+                Total number of job offers today\n
                 {content_max}
                 """
             )
@@ -522,7 +529,7 @@ if cf.check_password():
                 delta=int(content_max) - 654321,
             )
 
-        # -------------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------
 
         # DRAW AN HISTOGRAM OF JOB OFFERS FOR EACH CATEGORY
 
@@ -564,7 +571,7 @@ if cf.check_password():
             filters_barplot = cf.create_barplot(filter_var)
             st.altair_chart(filters_barplot, use_container_width=True)
 
-    # --------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     # CUSTOMISE THE SEARCH
 
@@ -585,7 +592,8 @@ if cf.check_password():
         default_start_date = (
             date.today() + relativedelta.relativedelta(days=-7)
         )
-        st.warning(f"Bug: Default Start Date should be {default_start_date}.")
+        st.warning(
+            f"Bug: Default Start Date should be {default_start_date}.")
 
         # 'default_start_date' does NOT work with 'min_value' below
         left_column, right_column = st.columns(2)
@@ -641,7 +649,7 @@ if cf.check_password():
                 time.sleep()
             st.success("File saved.")
 
-    # -------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     elif search_type == "Search based on values in categories":
         st.subheader("Search based on values in categories")
@@ -709,7 +717,8 @@ if cf.check_password():
             "deplacementCode": "deplacementPossibleCode",
             "deplacementLibelle": "deplacementPossibleLibelle",
         }
-        category_list = [dict_category_names.get(n, n) for n in category_list]
+        category_list = [dict_category_names.get(
+            n, n) for n in category_list]
 
         # Sort list of categories and change column name
         category_list.sort(reverse=False)
@@ -787,7 +796,8 @@ if cf.check_password():
 
         # Get the number of hits from the search
         content_range = search_categories["Content-Range"]
-        st.write(f"Total number of job offers: {content_range['max_results']}")
+        st.write(
+            f"Total number of job offers: {content_range['max_results']}")
 
         results_df_from_categories = pd.DataFrame(results)
         cf.convert_df_to_html_table(dataframe=results_df_from_categories)
@@ -861,7 +871,8 @@ if cf.check_password():
                     {len(salary_by_enterprise_dropna)}
                 """
             )
-            cf.convert_df_to_html_table(dataframe=salary_by_enterprise_dropna)
+            cf.convert_df_to_html_table(
+                dataframe=salary_by_enterprise_dropna)
         else:
             st.write(
                 f"""

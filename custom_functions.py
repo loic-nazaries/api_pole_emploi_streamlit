@@ -140,7 +140,8 @@ def convert_search_results_to_dataframe(
 # @st.cache(allow_output_mutation=True)
 def convert_df_to_html_table(
     dataframe: pd.DataFrame,
-    use_checkbox: bool = True
+    use_checkbox: bool = True,
+    key=None
 ) -> pd.DataFrame:
     """_summary_.
 
@@ -166,6 +167,7 @@ def convert_df_to_html_table(
         dataframe,
         gridOptions=gridOptions,
         enable_enterprise_modules=True,
+        key=key
     )
     return html_table
 
