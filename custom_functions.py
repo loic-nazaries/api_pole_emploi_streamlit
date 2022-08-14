@@ -297,7 +297,7 @@ def merge_dataframes(
     output_dataframe = pd.merge(
         input_dataframe_1, input_dataframe_2, how=how, on=on
     )
-    output_dataframe
+    return output_dataframe
 
 
 # @st.cache

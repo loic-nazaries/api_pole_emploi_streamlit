@@ -17,9 +17,12 @@ A function to remove the categories with high number of missing values was
 created to avoid hard-coding these categories list. There are now no bugs when
 categories had to be deleted manually from the list.
 
+The use of the 'rename_columns_auto' function was deleted as it did not seem
+to work.
+
 
 BUG IMPORTANT !!
-        The 'Search based on dates and keywords' section does NOT work anymore!
+        'Search based on dates and keywords' section does NOT work any more !!
 TODO Better describe the sections and results
 XXX Not possible to change the names of x-axis label in barplots (or elsewhere)
         as the definition of the acronyms is not provided by Pole Emploi
@@ -33,7 +36,10 @@ TODO Split app sections/steps into different files ?
 TODO Remove the object 'You have successfully logged in.' after 2 seconds
 TODO Similarly, remove the top of the page (API image) after logging in
 TODO Avoid hard-coding the categories (not elegant + prone to bugs)
-FIXME Fix the problems with the flattening of the 'langues' category
+        When the 'results_df_redux' is called in the 'if' loop of the
+        'Search based on values in categories' section, an error message
+        appears:
+            '''NameError: name 'results_df_redux' is not defined'''
 FIXME IMPORTANT !!
         Fix the issue that top 150 hits is the limit for  search output
 TODO Select a category and add a filter for numerical &
@@ -176,7 +182,7 @@ if cf.check_password():
     )
 
     # Call API client using the token details provided
-    # (client ID and secret from the secrets.toml file)
+    # (client ID and secret from the 'secrets.toml' file)
     client = Api(
         client_id=st.secrets["passwords"]["API_PE_CLIENT"],
         client_secret=st.secrets["passwords"]["API_PE_SECRET"],
@@ -220,22 +226,18 @@ if cf.check_password():
             category_to_extract="lieuTravail.libelle",
             new_fields=["departement", "ville"],
         )
+        # 'flattened_lieuTravail' variable is to be coded using above and
+        # below function structures so merging will work without the duplicate
+        # error message
 
-        # # Variable 'langues'
-        # # st.write("langues")
-        # # Extract the categories WITHIN the category
-        # flattened_langues = cf.flatten_category(
-        #     dataframe=results_df, category="langues"
-        # )
+        # Variable 'langues'
+        # Extract the categories WITHIN the category
+        flattened_langues = cf.flatten_category(
+            dataframe=results_df, category="langues"
+        )
 
-        # # Rename automatically the categories previously extracted
-        # flattened_langues = cf.rename_columns_auto(
-        #     dataframe=flattened_langues,
-        #     column_name="langues"
-        # )
-
-        # # Below NOT working
         # # Rename specific categories
+        # # Below NOT working
         # flattened_langues = cf.rename_category(
         #     dataframe=flattened_langues,
         #     columns={
@@ -245,81 +247,70 @@ if cf.check_password():
         # )
 
         # Variable 'qualitesProfessionnelles'
-        # st.write("qualitesProfessionnelles")
         flattened_qualitesPro = cf.flatten_category(
             dataframe=results_df, category="qualitesProfessionnelles"
         )
 
-        flattened_qualitesPro = cf.rename_columns_auto(
-            dataframe=flattened_qualitesPro,
-            column_name="qualitesPro"
-        )
-        # Below NOT working
-        flattened_qualitesPro = cf.rename_category(
-            dataframe=flattened_qualitesPro,
-            columns={
-                "('qualitePro 0',)": "qualitePro_0",
-                "('qualitePro 1',)": "qualitePro_1",
-                "('qualitePro 2',)": "qualitePro_2",
-            },
-        )
+        # # Below NOT working
+        # flattened_qualitesPro = cf.rename_category(
+        #     dataframe=flattened_qualitesPro,
+        #     columns={
+        #         "('qualitePro 0',)": "qualitePro_0",
+        #         "('qualitePro 1',)": "qualitePro_1",
+        #         "('qualitePro 2',)": "qualitePro_2",
+        #     },
+        # )
 
         # Variable 'competences'
-        # st.write("competences")
         flattened_competences = cf.flatten_category(
             dataframe=results_df, category="competences"
         )
 
-        flattened_competences = cf.rename_columns_auto(
-            dataframe=flattened_competences,
-            column_name="competences"
-        )
         # Keep top 3 competences
         flattened_competences = flattened_competences.iloc[:, 0:3]
-        # Below NOT working
-        flattened_competences = cf.rename_category(
-            dataframe=flattened_competences,
-            columns={
-                "('competences 0',)": "competences_0",
-                "('competences 1',)": "competences_1",
-                "('competences 2',)": "competences_2",
-            },
-        )
 
-        # Variable 'permis'  # to be (re)done
-        # st.write("permis")
+        # # Below NOT working
+        # flattened_competences = cf.rename_category(
+        #     dataframe=flattened_competences,
+        #     columns={
+        #         "('competences 0',)": "competences_0",
+        #         "('competences 1',)": "competences_1",
+        #         "('competences 2',)": "competences_2",
+        #     },
+        # )
+
+        # Variable 'permis'
         flattened_permis = cf.flatten_category(
             dataframe=results_df, category="permis"
         )
 
-        flattened_permis = cf.rename_category(
-            flattened_permis, columns={0: "permis"}
-        )
+        # flattened_permis = cf.rename_category(
+        #     flattened_permis, columns={
+        #         0: "permis_0",
+        #         1: "permis_1"
+        #     }
+        # )
 
         # Variable 'formations'
-        # st.write("formations")
         flattened_formations = cf.flatten_category(
             dataframe=results_df, category="formations"
         )
 
-        flattened_formations = cf.rename_columns_auto(
-            dataframe=flattened_formations,
-            column_name="formations"
-        )
-        # Below NOT working
-        flattened_formations = cf.rename_category(
-            dataframe=flattened_formations,
-            columns={
-                "('formations 0',)": "formations_0",
-                "('formations 1',)": "formations_1",
-            },
-        )
+        # # Below NOT working
+        # flattened_formations = cf.rename_category(
+        #     dataframe=flattened_formations,
+        #     columns={
+        #         "('formations 0',)": "formations_0",
+        #         "('formations 1',)": "formations_1",
+        #     },
+        # )
 
         # Concatenate flattened categories
         # Note: 'id' column was added to apply the '.merge()' function later on
         flattened_categories = [
             results_df["id"],
-            # flattened_langues,
+            # flattened_lieuTravail,
+            flattened_langues,
             flattened_qualitesPro,
             flattened_competences,
             flattened_permis,
@@ -335,13 +326,10 @@ if cf.check_password():
         results_df_merged = cf.merge_dataframes(
             results_df, flattened_categories, on="id"
         )
-        # results_df_merged
-
-        # Without calling a custom function
-        # Also rename de 'permis_y' variable
-        results_df_merged = pd.merge(
-            results_df, flattened_categories, how="left", on="id"
-        ).rename(columns={"permis_y": "permis"})
+        # Use the 'left cache' method to delete 'permis_x' after merge
+        # # Also rename de 'permis_y' variable
+        # .rename(columns={"permis_y": "permis"})
+        results_df_merged
 
         # Display percentage of missing data in a table
         nan_table = cf.create_missing_data_table(
@@ -373,6 +361,8 @@ if cf.check_password():
             st.write("Coming Soon!")
             # category_dictionary
 
+        st.subheader("Summary of Missing Data")
+
         # Detect columns with a high number of missing values
         low_category_list = cf.detect_low_occurrence_categories(
             dataframe=nan_table,
@@ -389,7 +379,6 @@ if cf.check_password():
             dataframe=results_df_redux
         )
 
-        st.subheader("Summary of Missing Data")
         # Below NOT working as some flattened columns are not deleted although
         # their missing data are higher than the threshold value
         # The reason is that the 'nan_table' did not work with
@@ -402,7 +391,7 @@ if cf.check_password():
         )
         # category_list
 
-        st.subheader("Table of job offers")
+        st.subheader("Table of job offers (cleaned)")
         results_df_redux
         # AgGrid(results_df_redux)  # NOT working
         # cf.convert_df_to_html_table(results_df_redux)  # NOT working
@@ -503,8 +492,12 @@ if cf.check_password():
 
     # CUSTOMISE THE SEARCH
 
-    if search_type == "Search based on dates and keywords":
+    elif search_type == "Search based on dates and keywords":
         st.subheader("Search based on dates and keywords")
+
+        ############################################
+        #  This section does NOT work any more !!  #
+        ############################################
 
         # Display error message in case the date range is not of at least 1 day
         st.error(
@@ -522,7 +515,11 @@ if cf.check_password():
         )
 
         st.warning(
-            f"Bug: Default Start Date should be {default_start_date}.")
+            f"""
+            Bug: Default Start Date should be SEVEN (7) days BEFORE the
+            current (end) date, i.e the {default_start_date}.
+            """
+        )
 
         # 'default_start_date' does NOT work with 'min_value' below
         left_column, right_column = st.columns(2)
@@ -590,9 +587,8 @@ if cf.check_password():
         # )
         # category_list
 
-        # IMPORTANT: could not worked out yet how to isolate the column names,
-        # hence they were hard-coded below
-        # use columns of the concatenated list of flattened variables instead ?
+        # IMPORTANT: could not worked out yet how to isolate the column names
+        # from above, hence they were hard-coded below
         category_list = [
             "id",
             "intitule",
@@ -651,8 +647,10 @@ if cf.check_password():
 
         # Sort list of categories and change column name
         category_list.sort(reverse=False)
+
         # Change list name
         list_categories = {"Final list of categories": category_list}
+
         # Display list of categories on the left-side panel
         st.sidebar.dataframe(list_categories)  # delete ?
 
@@ -673,7 +671,6 @@ if cf.check_password():
         key_words = st.text_input(
             label="Enter One or More Keywords, e.g. data analyst, bi"
         )
-        key_words
 
         # Select/deselect categories
         # Click a button to clear the selected categories
@@ -743,6 +740,7 @@ if cf.check_password():
 
         # Filter data by using the `salaire` for each `entreprise`
         st.subheader("Filter Categories")
+
         # Select the variables to keep
         # Default filters
         st.info(
