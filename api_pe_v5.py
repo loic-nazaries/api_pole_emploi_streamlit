@@ -17,6 +17,9 @@ A function to remove the categories with high number of missing values was
 created to avoid hard-coding these categories list. There are now no bugs when
 categories had to be deleted manually from the list.
 
+
+BUG IMPORTANT !!
+        The 'Search based on dates and keywords' section does NOT work anymore!
 TODO Better describe the sections and results
 XXX Not possible to change the names of x-axis label in barplots (or elsewhere)
         as the definition of the acronyms is not provided by Pole Emploi
@@ -30,6 +33,7 @@ TODO Split app sections/steps into different files ?
 TODO Remove the object 'You have successfully logged in.' after 2 seconds
 TODO Similarly, remove the top of the page (API image) after logging in
 TODO Avoid hard-coding the categories (not elegant + prone to bugs)
+FIXME Fix the problems with the flattening of the 'langues' category
 FIXME IMPORTANT !!
         Fix the issue that top 150 hits is the limit for  search output
 TODO Select a category and add a filter for numerical &
@@ -138,6 +142,7 @@ if cf.check_password():
         """
     )
 
+# # Add a 'st.selectbox()' to access different API analyses
 # # Below does not seem to work, even when adding an indent to the rest of the
 # # code below the 'START DATA ANALYSIS' section
 # if api_list == "Offres d'emploi v2":
@@ -441,16 +446,20 @@ if cf.check_password():
                 """
             )
 
-        # Add a metric of the change in job offer number since previous month
+        # Add a metric of the change in job offer number since previous week
         # i.e. use the non-working snippet below:
-        # default_start_date = (
-        #     date.today() - relativedelta.relativedelta(months=1)
-        # )
+        default_start_date = (
+            date.today() - relativedelta.relativedelta(days=7)
+        )
+        default_start_date
+
+        # past_week_offers =
+
         with right_column:
             st.metric(
-                label="Number of job offers since previous month",
+                label="Number of job offers since previous week",
                 value=654321,
-                # value=past_month_offers,  # 'past_month_offers' to be coded
+                # value=past_week_offers,  # 'past_week_offers' to be coded
                 # delta=12345,
                 delta=int(content_max) - 654321,
             )
@@ -507,10 +516,11 @@ if cf.check_password():
         # Set a default date to avoid error message when loading the page
         # as the date menu will ask for 'maxCreationDate ' superior to
         # 'minCreationDate '
-        # Hence 'default_start_date' is set to SEVEN SAYS prior to today's date
+        # Hence 'default_start_date' is set to SEVEN DAYS prior to today's date
         default_start_date = (
-            date.today() + relativedelta.relativedelta(days=-7)
+            date.today() - relativedelta.relativedelta(days=7)
         )
+
         st.warning(
             f"Bug: Default Start Date should be {default_start_date}.")
 
