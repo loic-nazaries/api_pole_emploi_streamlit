@@ -141,12 +141,14 @@ def convert_search_results_to_dataframe(
 def convert_df_to_html_table(
     dataframe: pd.DataFrame,
     use_checkbox: bool = True,
-    key=None
+    key: int = None
 ) -> pd.DataFrame:
-    """_summary_.
+    """_summary_
 
     Args:
         dataframe (pd.DataFrame): _description_
+        use_checkbox (bool, optional): _description_. Defaults to True.
+        key (int, optional): _description_. Defaults to None.
 
     Returns:
         pd.DataFrame: _description_
@@ -312,6 +314,27 @@ def create_missing_data_table(dataframe: pd.DataFrame) -> pd.DataFrame:
     return nan_table
 
 
+def detect_low_occurrence_categories(
+    dataframe: pd.DataFrame, threshold: int = 50
+) -> pd.DataFrame:
+    """Delete unnecessary columns with > 50% missing data per column.
+
+    The threshold can be changed.
+    Then, extract column names into a list.
+
+    Args:
+        dataframe (pd.DataFrame): _description_
+        threshold (int, optional): _description_. Defaults to 50.
+
+    Returns:
+        _type_: _description_
+    """
+    low_category_list = dataframe.loc[
+        dataframe["percent"] > threshold
+    ].index.to_list()
+    return low_category_list
+
+
 def drop_categories(
     dataframe: pd.DataFrame,
     drop_list: list[str]
@@ -458,6 +481,7 @@ def save_output_file(dataframe: pd.DataFrame, file_name: str) -> object:
 #     flatten_category()
 #     rename_columns_auto()
 #     create_missing_data_table()
+#     detect_low_occurrence_categories()
 #     drop_categories()
 #     create_missing_data_matrix()
 #     filter_categories()
@@ -481,6 +505,7 @@ def main():
     flatten_category()
     rename_columns_auto()
     create_missing_data_table()
+    detect_low_occurrence_categories()
     drop_categories()
     create_missing_data_matrix()
     filter_categories()

@@ -13,10 +13,15 @@ Similarly, the API credentials were moved to the 'secrets.toml' file from the
 
 Tabs coded previously are now active (an update was necessary)
 
-FIXME Renaming the flattened 'langues', 'formations' and 'competences'
+A function to remove the categories with high number of missing values was
+created to avoid hard-coding these categories list. There are now no bugs when
+categories had to be deleted manually from the list.
+
+TODO Better describe the sections and results
+XXX Not possible to change the names of x-axis label in barplots (or elsewhere)
+        as the definition of the acronyms is not provided by Pole Emploi
+BUG Renaming the flattened 'langues', 'formations' and 'competences'
         variables is not working
-TODO Split the function 'def extract_search_content()'
-        into THREE different functions
 TODO Merge the custom search types into one ?
         if so, using a date range should not be compulsory
 TODO Split app sections/steps into different files ?
@@ -24,9 +29,7 @@ TODO Split app sections/steps into different files ?
         See new Streamlit functionality for displaying multiple pages
 TODO Remove the object 'You have successfully logged in.' after 2 seconds
 TODO Similarly, remove the top of the page (API image) after logging in
-TODO Better describe the sections and results
-FIXME Fix the function 'drop_low_occurrence_categories'
-TODO avoid hard-coding the categories (not elegant + prone to bugs)
+TODO Avoid hard-coding the categories (not elegant + prone to bugs)
 FIXME IMPORTANT !!
         Fix the issue that top 150 hits is the limit for  search output
 TODO Select a category and add a filter for numerical &
@@ -38,17 +41,18 @@ TODO Modify exception/error in date range to print out following message:
             Please choose a range of at least ONE day.
             '''
         )
+BUG It is not possible to build a table of missing data ('nan_table') with
+        the 'results_df_merged' dataframe.
+        Getting below error message:
+            '''StreamlitAPIException: ('cannot mix list and non-list, non-null
+            values', 'Conversion failed for column None with type object')'''
+        The reason is that the 'nan_table' did not work with 'results_df_redux'
+        and 'results_df' was used instead
 TODO Write a snippet for subsetting filtered data (see 'lambda' functions)
-FIXME Why is 'client.referentiel('metiers')' not working ?!
-FIXME Format numbers with a space between thousands
+BUG Why is 'client.referentiel('metiers')' not working ?!
+TODO Format numbers with a space between thousands
         => '{number:,}'.replace(',', ' ') is not working...
-TODO In basic search (or sidebar ?), add a column next to
-        'List of Categories' containing a definition of the categories;
-        e.g. scroll down list ?
-TODO And/or modify barplot layout to have definition of acronyms on right
-            use st.columns() with 2/3-1/3 layout
-FIXME The default minimum date cannot be set
-TODO Change the x-axis label in barplots (experience, qualification)
+BUG The default minimum date cannot be set
 TODO Set up email address or web client to report a bug
 TODO Deploy app to Heroku or Streamlit Community + try Voila
 """
@@ -114,7 +118,6 @@ st.image("./images/api_pe_account.png")
 
 # There is possibility to connect to different APIs when needed
 api_list = [
-    "Pick an API below",
     "Offres d'emploi v2",
     "Anotéa",
     "Pôle emploi Connect",
@@ -204,28 +207,6 @@ if cf.check_password():
         results_df = cf.convert_search_results_to_dataframe(
             search_results=results
         )
-
-        # Get the list of categories within the database
-        category_list = cf.extract_search_categories(
-            dataframe=results_df
-        )
-
-        # # Create a dictionary of the categories
-        # category_dictionary =
-
-        tab1, tab2 = st.tabs([
-            "Job offers",
-            "Definition of category names and values"  # or on sidebar?
-        ])
-        with tab1:
-            st.subheader("Initial table of job offers")
-            # Build a paginated html-styled table
-            # How the function should be called, otherwise it won't work
-            cf.convert_df_to_html_table(results_df, key=2)
-        with tab2:
-            st.subheader("Dictionary of Categories")
-            st.write("Coming Soon!")
-            # category_dictionary
 
         # Variable 'lieuTravail.libelle'
         # Extract the words separated by a '-'
@@ -359,84 +340,43 @@ if cf.check_password():
 
         # Display percentage of missing data in a table
         nan_table = cf.create_missing_data_table(
-            # dataframe=results_df_merged,  # NOT working
+            # dataframe=results_df_merged,  # NOT working so using initial data
             dataframe=results_df
         )
-        # nan_table
 
-        # Prepare summary table of missing data based on missing data threshold
-        # and/or chosen variables
-        # # a menu with all categories is displayed, and user 'unticks'
-        # # the unwanted values (see next section too)
-        # st.multiselect(
-        #     label="Deselect variables with a high number of missing values",
-        #     options=results_df_final.columns
-        # )
+        # # Create a dictionary of the categories
+        # category_dictionary =
 
-        # def drop_low_occurrence_categories(
-        #     dataframe: pd.DataFrame, threshold: int = 50
-        # ) -> pd.DataFrame:
-        #     """Delete unnecessary columns with > 50% missing data per column
+        # Display over 3 tabs the main information from the database
+        tab1, tab2, tab3 = st.tabs(
+            [
+                "Job offers",
+                "Table of missing values in each category",
+                "Definition of category names and values"  # or on sidebar?
+            ]
+        )
+        with tab1:
+            st.subheader("Initial table of job offers")
+            # Build a paginated html-styled table
+            # It is how the function should be called, otherwise it won't work
+            cf.convert_df_to_html_table(results_df, key=2)
+        with tab2:
+            st.subheader("Table of missing values in each category")
+            nan_table
+        with tab3:
+            st.subheader("Dictionary of Categories")
+            st.write("Coming Soon!")
+            # category_dictionary
 
-        #     Args:
-        #         dataframe (pd.DataFrame): _description_
-        #         threshold (int, optional): _description_. Defaults to 50.
-
-        #     Returns:
-        #         _type_: _description_
-        #     """
-        #     dataframe_redux = [
-        #         dataframe.drop(col)
-        #         for col in dataframe.columns
-        #         if dataframe[col] > threshold
-        #     ]
-        #     return dataframe_redux
-
-        # # Below  NOT working
-        # # st.write("Delete columns with more than 10% of missing values")
-        # results_df_final_redux = drop_low_occurrence_categories(
-        #     dataframe=results_df_final,
-        #     threshold=10,
-        # )
-        # results_df_final_redux
-        # AgGrid(results_df_final_redux)
-
-        # Since above code not working, dropping unnecessary manually
-        category_drop = [
-            "qualitesProfessionnelles",
-            "competences",
-            "permis",
-            "permis_x",
-            "formations",
-            # "('formations 0',)",
-            # "('formations 1',)",
-            # "contact.commentaire",
-            "salaire.complement2",
-            "contact.telephone",
-            "experienceCommentaire",
-            "contact.coordonnees3",
-            "contact.coordonnees2",
-            "langues",
-            # "('langues 0',)",
-            # "('langues 1',)",
-            "salaire.commentaire",
-            "deplacementCode",
-            "formations",
-            "deplacementLibelle",
-            "salaire.complement1",
-            "entreprise.logo",
-            "contact.courriel",
-            "entreprise.url",
-            "entreprise.description",
-            "contact.nom",
-            "contact.urlPostulation",
-            "agence.courriel",
-            # "complementExercice",
-        ]
+        # Detect columns with a high number of missing values
+        low_category_list = cf.detect_low_occurrence_categories(
+            dataframe=nan_table,
+            threshold=20,
+        )
 
         # Drop categories not needed or redundant
         results_df_redux = cf.drop_categories(
-            dataframe=results_df_merged, drop_list=category_drop,
+            dataframe=results_df_merged, drop_list=low_category_list,
         )
 
         # Display missing values status for each column in a matrix
@@ -444,32 +384,18 @@ if cf.check_password():
             dataframe=results_df_redux
         )
 
-        # # Below NOT working
-        # nan_table = cf.create_missing_data_table(
-        #     dataframe=results_df_redux  # same issue as 1st nan table
-        # )
-        # nan_table
+        st.subheader("Summary of Missing Data")
+        # Below NOT working as some flattened columns are not deleted although
+        # their missing data are higher than the threshold value
+        # The reason is that the 'nan_table' did not work with
+        # 'results_df_redux' and 'results_df' was used instead
+        st.pyplot(missing_data_matrix.figure)
 
         # Extract column names into a dataframe
         category_list = cf.extract_search_categories(
             dataframe=results_df_redux
         )
-
-        # Display table and matrix of missing data next to each other
-        left_column, right_column = st.columns(2)
-        with left_column:
-            # Build a paginated html-styled table
-            st.subheader("List of the categories in the database")
-            cf.convert_df_to_html_table(
-                dataframe=category_list,
-                use_checkbox=False,
-            )
-        with right_column:
-            st.subheader("Table of missing values in each category")
-            nan_table
-
-        st.subheader("Summary of Missing Data")
-        st.pyplot(missing_data_matrix.figure)
+        # category_list
 
         st.subheader("Table of job offers")
         results_df_redux
@@ -540,13 +466,6 @@ if cf.check_password():
             "natureContrat"
         ]
 
-        # def apply_filter(dataframe=filters_df):
-        #     for _ in filter_names:
-        #         filters_df = filter_categories(
-        #             dataframe=filters_df, filter_name="typeContrat"
-        #     )
-
-        # add loop (see above)
         contract_type_df = cf.filter_categories(
             dataframe=filters_df, filter_name="typeContrat"
         )
