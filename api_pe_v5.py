@@ -17,10 +17,6 @@ A function to remove the categories with high number of missing values was
 created to avoid hard-coding these categories list. There are now no bugs when
 categories had to be deleted manually from the list.
 
-The use of the 'rename_columns_auto' function was deleted as it did not seem
-to work.
-
-
 BUG IMPORTANT !!
         'Search based on dates and keywords' section does NOT work any more !!
 TODO Better describe the sections and results
@@ -236,6 +232,12 @@ if cf.check_password():
             dataframe=results_df, category="langues"
         )
 
+        # Rename automatically the categories previously extracted
+        flattened_langues = cf.rename_columns_auto(
+            dataframe=flattened_langues,
+            column_name="langues"
+        )
+
         # # Rename specific categories
         # # Below NOT working
         # flattened_langues = cf.rename_category(
@@ -251,6 +253,11 @@ if cf.check_password():
             dataframe=results_df, category="qualitesProfessionnelles"
         )
 
+        flattened_qualitesPro = cf.rename_columns_auto(
+            dataframe=flattened_qualitesPro,
+            column_name="qualitesPro"
+        )
+
         # # Below NOT working
         # flattened_qualitesPro = cf.rename_category(
         #     dataframe=flattened_qualitesPro,
@@ -264,6 +271,11 @@ if cf.check_password():
         # Variable 'competences'
         flattened_competences = cf.flatten_category(
             dataframe=results_df, category="competences"
+        )
+
+        flattened_competences = cf.rename_columns_auto(
+            dataframe=flattened_competences,
+            column_name="competences"
         )
 
         # Keep top 3 competences
@@ -284,6 +296,12 @@ if cf.check_password():
             dataframe=results_df, category="permis"
         )
 
+        flattened_permis = cf.rename_columns_auto(
+            dataframe=flattened_permis,
+            column_name="permis"
+        )
+
+        # # Below NOT working
         # flattened_permis = cf.rename_category(
         #     flattened_permis, columns={
         #         0: "permis_0",
@@ -294,6 +312,11 @@ if cf.check_password():
         # Variable 'formations'
         flattened_formations = cf.flatten_category(
             dataframe=results_df, category="formations"
+        )
+
+        flattened_formations = cf.rename_columns_auto(
+            dataframe=flattened_formations,
+            column_name="formations"
         )
 
         # # Below NOT working
