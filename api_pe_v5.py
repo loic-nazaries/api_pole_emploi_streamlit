@@ -1,4 +1,4 @@
-"""API of Pole Emploi.
+"""API of Pôle Emploi.
 
 Specifically, an API to consult available job offers.
 
@@ -20,47 +20,49 @@ categories had to be deleted manually from the list.
 BUG IMPORTANT !!
         'Search based on dates and keywords' section does NOT work any more !!
 TODO Better describe the sections and results
-XXX Not possible to change the names of x-axis label in barplots (or elsewhere)
-        as the definition of the acronyms is not provided by Pole Emploi
-BUG Renaming the flattened 'langues', 'formations' and 'competences'
-        variables is not working
+BUG The default minimum date cannot be set
+TODO Deploy app to Heroku or Streamlit Community + try Voila
+FIXME IMPORTANT !!
+        Fix the issue that top 150 hits is the limit for search output
 TODO Merge the custom search types into one ?
         if so, using a date range should not be compulsory
 TODO Split app sections/steps into different files ?
         Hence, main file will be less complicated (and shorter)
         See new Streamlit functionality for displaying multiple pages
-TODO Remove the object 'You have successfully logged in.' after 2 seconds
-TODO Similarly, remove the top of the page (API image) after logging in
 TODO Avoid hard-coding the categories (not elegant + prone to bugs)
         When the 'results_df_redux' is called in the 'if' loop of the
         'Search based on values in categories' section, an error message
         appears:
             '''NameError: name 'results_df_redux' is not defined'''
-FIXME IMPORTANT !!
-        Fix the issue that top 150 hits is the limit for  search output
+        This is because 'results_df_redux' was created in a different loop
 TODO Select a category and add a filter for numerical &
         non-numerical filters (using sliders and number inputs)
-TODO Modify exception/error in date range to print out following message:
-        st.error(
-            '''If an error message appears below, it is likely that
-            the start and end dates are the same.
-            Please choose a range of at least ONE day.
-            '''
-        )
 BUG It is not possible to build a table of missing data ('nan_table') with
         the 'results_df_merged' dataframe.
         Getting below error message:
             '''StreamlitAPIException: ('cannot mix list and non-list, non-null
             values', 'Conversion failed for column None with type object')'''
-        The reason is that the 'nan_table' did not work with 'results_df_redux'
-        and 'results_df' was used instead
+BUG Renaming the flattened 'langues', 'formations' and 'competences'
+        variables is not working
+TODO Get last week's number of job offers
+        (use search_categories["Content-Range"] ?)
 TODO Write a snippet for subsetting filtered data (see 'lambda' functions)
-BUG Why is 'client.referentiel('metiers')' not working ?!
 TODO Format numbers with a space between thousands
         => '{number:,}'.replace(',', ' ') is not working...
-BUG The default minimum date cannot be set
+TODO Remove the object 'You have successfully logged in.' after 2 seconds
+TODO Similarly, remove the top of the page (API image) after logging in
+TODO Modify exception/error (using 'assert' ?) in the date range to print out
+        the following message:
+            st.error(
+                '''If an error message appears below, it is likely that
+                the start and end dates are the same.
+                Please choose a range of at least ONE day.
+                '''
+            )
+BUG Why is 'client.referentiel('metiers')' not working ?!
 TODO Set up email address or web client to report a bug
-TODO Deploy app to Heroku or Streamlit Community + try Voila
+XXX Not possible to change the names of x-axis label in barplots (or elsewhere)
+        as the definition of the acronyms is not provided by Pôle Emploi
 """
 
 from datetime import date
@@ -81,7 +83,7 @@ import custom_functions as cf
 
 # Initial page config
 st.set_page_config(
-    page_title="API Pole Emploi",
+    page_title="API Pôle Emploi",
     page_icon="./images/epsilon_logo.png",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -117,9 +119,9 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 st.sidebar.image("./images/epsilon_logo.png")
 
 # App title
-st.title("API de Pole Emploi")
+st.title("API de Pôle Emploi")
 
-# Show Pole Emploi API log-in image
+# Show Pôle Emploi API log-in image
 st.image("./images/api_pe_account.png")
 
 # There is possibility to connect to different APIs when needed
@@ -139,8 +141,8 @@ if cf.check_password():
     st.write(
         """
         Click
-        [here](https:/pole-emploi.io/data/api/offres-emploi)
-        to access the Pôle emploi API catalog.
+        [here](https:/pole-emploi.io/data/api, "Pôle emploi API catalog")
+        to access the **Pôle emploi API catalog**.
         """
     )
 
@@ -155,8 +157,11 @@ if cf.check_password():
 #     st.write(
 #         """
 #         Click
-#         [here](https:/pole-emploi.io/data/api/offres-emploi)
-#         to access the API page.
+#         [here](
+#             https:/pole-emploi.io/data/api/offres-emploi,
+#             "Offres d'emploi v2** API page"
+#         )
+#         to access the **Offres d'emploi v2 API page**.
 #         """
 #     )
 
@@ -408,12 +413,6 @@ if cf.check_password():
         # 'results_df_redux' and 'results_df' was used instead
         st.pyplot(missing_data_matrix.figure)
 
-        # Extract column names into a dataframe
-        category_list = cf.extract_search_categories(
-            dataframe=results_df_redux
-        )
-        # category_list
-
         st.subheader("Table of job offers (cleaned)")
         results_df_redux
         # AgGrid(results_df_redux)  # NOT working
@@ -450,7 +449,6 @@ if cf.check_password():
         # Get the number of hits from the search
         left_column, right_column = st.columns(2)
         with left_column:
-            # content_range = basic_search["Content-Range"]
             st.info(
                 f"""
                 Total number of job offers today\n
@@ -465,6 +463,8 @@ if cf.check_password():
         )
         default_start_date
 
+        # # Get last week's number of job offers
+        # # (use search_categories["Content-Range"] ?)
         # past_week_offers =
 
         with right_column:
