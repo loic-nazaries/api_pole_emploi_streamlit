@@ -1,8 +1,4 @@
-"""Functions used for extracting data from Pole Emploi API.
-
-TODO split the function 'def extract_search_content()'
-into THREE different functions
-"""
+"""Functions used for extracting data from Pole Emploi API."""
 
 import streamlit as st
 import pandas as pd
@@ -174,7 +170,7 @@ def convert_df_to_html_table(
     return html_table
 
 
-def extract_search_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
+def extract_search_categories(dataframe: pd.DataFrame) -> list:
     """Extract a list of all columns/categories in the dataframe.
 
     Args:
@@ -183,8 +179,9 @@ def extract_search_categories(dataframe: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: _description_
     """
-    category_list = pd.DataFrame(dataframe.columns)
-    category_list.columns = ["Categories"]
+    cat_list = pd.DataFrame(dataframe.columns)
+    cat_list.columns = ["Categories"]
+    category_list = cat_list.Categories.to_list()
     return category_list
 
 
