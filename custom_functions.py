@@ -139,7 +139,7 @@ def convert_df_to_html_table(
     use_checkbox: bool = True,
     key: int = None
 ) -> pd.DataFrame:
-    """_summary_
+    """_summary_.
 
     Args:
         dataframe (pd.DataFrame): _description_

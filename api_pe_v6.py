@@ -22,7 +22,7 @@ TODO Select a category and add a filter for numerical &
 BUG It is not possible to build a table of missing data ('nan_table') with
         the 'results_df_merged' dataframe.
         Getting below error message:
-            '''StreamlitAPIException: ('cannot mix list and non-list, non-null
+        BUG'''StreamlitAPIException: ('cannot mix list and non-list, non-null
             values', 'Conversion failed for column None with type object')'''
 BUG Renaming the flattened 'langues', 'formations' and 'competences'
         variables is not working
